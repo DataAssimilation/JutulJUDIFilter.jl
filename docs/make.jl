@@ -1,7 +1,7 @@
 using Pkg: Pkg
-using PKGNAME
+using JutulJUDIFilter
 using Documenter
-using Random # Loads PKGNAME Random extension.
+using Random # Loads JutulJUDIFilter Random extension.
 
 using Literate
 
@@ -89,30 +89,30 @@ for (ex, pth) in examples
 end
 
 # Set metadata for doctests.
-DocMeta.setdocmeta!(PKGNAME, :DocTestSetup, :(using PKGNAME, Test); recursive=true)
-if PKGNAME.HAS_NATIVE_EXTENSIONS
+DocMeta.setdocmeta!(JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true)
+if JutulJUDIFilter.HAS_NATIVE_EXTENSIONS
     using Random
     DocMeta.setdocmeta!(
-        PKGNAME.get_extension(PKGNAME, :RandomExt),
+        JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt),
         :DocTestSetup,
-        :(using PKGNAME, Test);
+        :(using JutulJUDIFilter, Test);
         recursive=true,
     )
 end
 makedocs(;
-    modules=[PKGNAME, PKGNAME.get_extension(PKGNAME, :RandomExt)],
+    modules=[JutulJUDIFilter, JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt)],
     authors="Grant Bruer gbruer15@gmail.com and contributors",
-    sitename="PKGNAME.jl",
+    sitename="JutulJUDIFilter.jl",
     source=DOC_STAGE,
     build=DOC_BUILD,
     format=Documenter.HTML(;
-        repolink="https://github.com/gbruer15/PKGNAME.jl",
-        canonical="https://gbruer15.github.io/PKGNAME.jl",
+        repolink="https://github.com/tmp398243/tmp335274",
+        canonical="https://tmp398243.github.io/tmp335274",
         edit_link="main",
         assets=String[],
         size_threshold=2 * 2^20,
     ),
-    repo="github.com/gbruer15/PKGNAME.jl",
+    repo="github.com/tmp398243/tmp335274",
     pages=[
         "Home" => "index.md",
         "Examples" => examples_markdown,

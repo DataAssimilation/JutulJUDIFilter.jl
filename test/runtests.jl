@@ -1,5 +1,5 @@
 using Pkg: Pkg
-using PKGNAME
+using JutulJUDIFilter
 using Test
 using TestReports
 using Aqua
@@ -7,28 +7,28 @@ using Documenter
 
 ts = @testset ReportingTestSet "" begin
     @testset "Code quality (Aqua.jl)" begin
-        Aqua.test_all(PKGNAME; ambiguities=false)
-        Aqua.test_ambiguities(PKGNAME)
+        Aqua.test_all(JutulJUDIFilter; ambiguities=false)
+        Aqua.test_ambiguities(JutulJUDIFilter)
     end
 
     include("test_pkg_stuff.jl")
 
     # Set metadata for doctests.
-    DocMeta.setdocmeta!(PKGNAME, :DocTestSetup, :(using PKGNAME, Test); recursive=true)
-    if PKGNAME.HAS_NATIVE_EXTENSIONS
+    DocMeta.setdocmeta!(JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true)
+    if JutulJUDIFilter.HAS_NATIVE_EXTENSIONS
         using Random
         DocMeta.setdocmeta!(
-            PKGNAME.get_extension(PKGNAME, :RandomExt),
+            JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt),
             :DocTestSetup,
-            :(using PKGNAME, Test);
+            :(using JutulJUDIFilter, Test);
             recursive=true,
         )
     end
 
     # Run doctests.
-    doctest(PKGNAME; manual=true)
-    if PKGNAME.HAS_NATIVE_EXTENSIONS
-        doctest(PKGNAME.get_extension(PKGNAME, :RandomExt); manual=true)
+    doctest(JutulJUDIFilter; manual=true)
+    if JutulJUDIFilter.HAS_NATIVE_EXTENSIONS
+        doctest(JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt); manual=true)
     end
 
     # Run examples.
