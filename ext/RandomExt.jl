@@ -1,13 +1,13 @@
-"This module extends PKGNAME with functionality from Random."
+"This module extends JutulJUDIFilter with functionality from Random."
 module RandomExt
 
-using PKGNAME: PKGNAME
+using JutulJUDIFilter: JutulJUDIFilter
 using Random
 
 """
     greeting()
 
-Call [`PKGNAME.greeting`](@ref) with a random name.
+Call [`JutulJUDIFilter.greeting`](@ref) with a random name.
 
 
 # Examples
@@ -18,6 +18,6 @@ julia> @test true;
 ```
 
 """
-PKGNAME.greeting() = PKGNAME.greeting(rand(5))
+JutulJUDIFilter.greeting() = JutulJUDIFilter.greeting(rand(5))
 
 end

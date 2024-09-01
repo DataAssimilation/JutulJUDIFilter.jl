@@ -1,5 +1,5 @@
-name = "PKGNAME"
-uuid = "00000000-0000-0000-0000-123456789010"
+name = "JutulJUDIFilter"
+uuid = "80fb201b-9edf-4eaa-a47c-dccd168d6cca"
 authors = ["Grant Bruer gbruer15@gmail.com and contributors"]
 version = "1.0.0-DEV"
 

@@ -1,27 +1,27 @@
 ```@meta
-CurrentModule = PKGNAME
+CurrentModule = JutulJUDIFilter
 ```
 
-# PKGNAME
+# JutulJUDIFilter
 
-Documentation for [PKGNAME](https://github.com/gbruer15/PKGNAME.jl).
+Documentation for [JutulJUDIFilter](https://github.com/tmp398243/tmp335274).
 
 
 ```@index
-Modules = [PKGNAME]
+Modules = [JutulJUDIFilter]
 ```
 
 ```@autodocs
-Modules = [PKGNAME]
+Modules = [JutulJUDIFilter]
 ```
 
 
 # Extensions
 
 ```@index
-Modules = [PKGNAME.get_extension(PKGNAME, :RandomExt)]
+Modules = [JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt)]
 ```
 
 ```@autodocs
-Modules = [PKGNAME.get_extension(PKGNAME, :RandomExt)]
+Modules = [JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt)]
 ```
