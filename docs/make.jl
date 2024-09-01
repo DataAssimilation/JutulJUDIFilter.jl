@@ -89,7 +89,9 @@ for (ex, pth) in examples
 end
 
 # Set metadata for doctests.
-DocMeta.setdocmeta!(JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true)
+DocMeta.setdocmeta!(
+    JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true
+)
 if JutulJUDIFilter.HAS_NATIVE_EXTENSIONS
     using Random
     DocMeta.setdocmeta!(

@@ -14,7 +14,9 @@ ts = @testset ReportingTestSet "" begin
     include("test_pkg_stuff.jl")
 
     # Set metadata for doctests.
-    DocMeta.setdocmeta!(JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true)
+    DocMeta.setdocmeta!(
+        JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true
+    )
     if JutulJUDIFilter.HAS_NATIVE_EXTENSIONS
         using Random
         DocMeta.setdocmeta!(
