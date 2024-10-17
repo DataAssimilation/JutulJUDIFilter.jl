@@ -16,14 +16,19 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
     try
         using Ensembles: Ensembles
     catch
-        Pkg.add(; url="https://github.com/tmp398243/tmp32487543")
-        using Ensembles: Ensembles
+        JutulJUDIFilter.install(:Ensembles)
     end
 
     try
-        import Lorenz63: Lorenz63
+        import ConfigurationsJutulDarcy: ConfigurationsJutulDarcy
     catch
-        Ensembles.install(:Lorenz63)
+        JutulJUDIFilter.install(:ConfigurationsJutulDarcy)
+    end
+
+    try
+        import ConfigurationsJUDI: ConfigurationsJUDI
+    catch
+        JutulJUDIFilter.install(:ConfigurationsJUDI)
     end
 
     try
