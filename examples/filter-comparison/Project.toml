@@ -1,0 +1,12 @@
+name = "filter-comparison"
+
+[deps]
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+JutulJUDIFilter = "80fb201b-9edf-4eaa-a47c-dccd168d6cca"
+Literate = "98b081ad-f1c9-55d3-8b20-4c87d4299306"
+Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+TestReports = "dcd651b4-b50a-5b6b-8f22-87e9f253a252"
+
+[compat]
+julia = "1.10"
