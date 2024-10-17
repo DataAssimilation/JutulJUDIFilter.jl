@@ -14,14 +14,3 @@ Modules = [JutulJUDIFilter]
 ```@autodocs
 Modules = [JutulJUDIFilter]
 ```
-
-
-# Extensions
-
-```@index
-Modules = [JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt)]
-```
-
-```@autodocs
-Modules = [JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt)]
-```

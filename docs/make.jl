@@ -1,7 +1,6 @@
 using Pkg: Pkg
 using JutulJUDIFilter
 using Documenter
-using Random # Loads JutulJUDIFilter Random extension.
 
 using Literate
 
@@ -92,17 +91,8 @@ end
 DocMeta.setdocmeta!(
     JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true
 )
-if JutulJUDIFilter.HAS_NATIVE_EXTENSIONS
-    using Random
-    DocMeta.setdocmeta!(
-        JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt),
-        :DocTestSetup,
-        :(using JutulJUDIFilter, Test);
-        recursive=true,
-    )
-end
 makedocs(;
-    modules=[JutulJUDIFilter, JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt)],
+    modules=[JutulJUDIFilter],
     authors="Grant Bruer gbruer15@gmail.com and contributors",
     sitename="JutulJUDIFilter.jl",
     source=DOC_STAGE,
