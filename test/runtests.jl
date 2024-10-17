@@ -17,21 +17,9 @@ ts = @testset ReportingTestSet "" begin
     DocMeta.setdocmeta!(
         JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true
     )
-    if JutulJUDIFilter.HAS_NATIVE_EXTENSIONS
-        using Random
-        DocMeta.setdocmeta!(
-            JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt),
-            :DocTestSetup,
-            :(using JutulJUDIFilter, Test);
-            recursive=true,
-        )
-    end
 
     # Run doctests.
     doctest(JutulJUDIFilter; manual=true)
-    if JutulJUDIFilter.HAS_NATIVE_EXTENSIONS
-        doctest(JutulJUDIFilter.get_extension(JutulJUDIFilter, :RandomExt); manual=true)
-    end
 
     # Run examples.
     examples_dir = joinpath(@__DIR__, "..", "examples")

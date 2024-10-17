@@ -69,7 +69,7 @@ Runs the project's tests using Julia's package manager with coverage enabled.
 
 #### `make autoformat`
 
-Automatically formats Julia code in the `src`, `test`, `docs`, `ext`, and `examples` directories using JuliaFormatter.
+Automatically formats Julia code in the `src`, `test`, `docs`, and `examples` directories using JuliaFormatter.
 
 #### `make doc`
 
