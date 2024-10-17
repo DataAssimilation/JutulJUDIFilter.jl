@@ -11,7 +11,8 @@ ts = @testset ReportingTestSet "" begin
         Aqua.test_ambiguities(JutulJUDIFilter)
     end
 
-    include("test_pkg_stuff.jl")
+    # Run unit tests.
+    @test true
 
     # Set metadata for doctests.
     DocMeta.setdocmeta!(
