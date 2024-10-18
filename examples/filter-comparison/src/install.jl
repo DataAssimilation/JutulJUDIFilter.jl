@@ -1,6 +1,6 @@
 
 if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
-    basename(dirname(Base.active_project())) in ["v1.10", "v1.9", "v1.8", "v1.7", "v1.6"]
+    basename(dirname(Base.active_project())) in ["v1.11", "v1.10"]
     using Pkg: Pkg
 
     Pkg.activate(joinpath(@__DIR__, ".."))
@@ -11,12 +11,14 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
     catch
         path = get(ENV, "jutuljudifilter_path", joinpath(@__DIR__, "..", "..", ".."))
         Pkg.develop(; path)
+        using JutulJUDIFilter: JutulJUDIFilter
     end
 
     try
         using Ensembles: Ensembles
     catch
         JutulJUDIFilter.install(:Ensembles)
+        using Ensembles: Ensembles
     end
 
     try
@@ -45,6 +47,7 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
 
     Pkg.add([
         "DrWatson",
+        "JutulDarcy",
         "LinearAlgebra",
         "Random",
         "CairoMakie",

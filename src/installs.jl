@@ -2,7 +2,7 @@
 using Pkg: Pkg
 _dependencies = Dict{Symbol,Any}()
 _dependencies[:ConfigurationsJutulDarcy] =
-    () -> Pkg.add(; url="https://github.com/tmp398243/tmp395832")
+    () -> Pkg.add(; url="https://github.com/gbruer15/ConfigurationsJutulDarcy.jl")
 _dependencies[:ConfigurationsJUDI] =
     () -> Pkg.add(; url="https://github.com/tmp398243/tmp3117499")
 _dependencies[:Ensembles] =
