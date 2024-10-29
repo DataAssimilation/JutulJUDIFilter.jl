@@ -1,4 +1,15 @@
 
+macro codegen_copy_constructor(T)
+    esc(
+        quote
+            function $T(x::$T; kwargs...)
+                default_kwargs = (f => getfield(x, f) for f in fieldnames($T))
+                return $T(; default_kwargs..., kwargs...)
+            end
+        end
+    )
+end
+
 if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
     basename(dirname(Base.active_project())) in ["v1.11", "v1.10"]
     using Pkg: Pkg
@@ -61,7 +72,13 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         "Logging",
         "Markdown",
         "Distributed",
+        "YAML",
     ])
 
     Pkg.instantiate()
+
+    using ConfigurationsJutulDarcy
+
+    @codegen_copy_constructor ConfigurationsJutulDarcy.JutulOptions
+    @codegen_copy_constructor ConfigurationsJutulDarcy.TimeDependentOptions
 end

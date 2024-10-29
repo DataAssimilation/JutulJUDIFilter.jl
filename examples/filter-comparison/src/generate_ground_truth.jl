@@ -16,28 +16,44 @@ using Ensembles:
     xor_seed!
 using Random: Random
 
-using Jutul: Jutul
-ext = Ensembles.get_extension(Ensembles, :JutulExt)
-using .ext: JutulModel
+using ConfigurationsJutulDarcy
+using JutulDarcy
+using JutulDarcy.Jutul
+using Statistics
+using LinearAlgebra
+import YAML
+
+include("jutul_model.jl")
+
+include("../params/small-params.jl")
 
 # Generate synthetic ground-truth observations.
-function generate_ground_truth(params::Dict)
+function generate_ground_truth(params)
+    K = (Val(:Saturation), Val(:Pressure))
+    state_keys = (:Saturation, :Pressure)
+    JMT = JutulModelTranslator(K)
+
+    options = params.transition
+    options = JutulOptions(options; time = [TimeDependentOptions(options.time[1]; years = 1.0, steps=1)])
+    M = JutulModel(; translator=JMT, options)
+
     observation_times = let
-        step = params["observation"]["timestep_size"]
-        length = params["observation"]["num_timesteps"] + 1
+        step = params.observation.timestep_size
+        length = params.observation.num_timesteps + 1
         range(; start=0, length, step)
     end
 
     ## Make operators.
-    transitioner = JutulModel(; params)
-    observer = NoisyObserver(get_state_keys(transitioner); params)
+    # transitioner = JutulModel(; params)
+    observer = NoisyObserver(state_keys; params=params.observation)
 
     ## Set seed for ground-truth simulation.
     Random.seed!(0xfee55e45)
     xor_seed!(observer, UInt64(0x243ecae5))
 
     ground_truth = @time let
-        state0 = Dict{Symbol,Any}(:state => randn(3))
+        state = Dict{Symbol, Any}()
+        sim_to_member!(JMT, state, M.state0, M.domain)
 
         ## Set seed for ground-truth simulation.
         Random.seed!(0xfee55e45)
@@ -47,11 +63,10 @@ function generate_ground_truth(params::Dict)
         t0 = 0.0
         states = Vector{Dict{Symbol,Any}}(undef, length(observation_times))
         observations = Vector{Dict{Symbol,Any}}(undef, length(observation_times))
-        state = state0
-        states[1] = state0
-        observations[1] = observer(state0)
+        states[1] = state
+        observations[1] = observer(state)
         @progress "Ground-truth" for (i, t) in enumerate(observation_times[2:end])
-            state = transitioner(state, t0, t)
+            state = M(state, t0, t)
             obs = observer(state)
             states[i + 1] = state
             observations[i + 1] = split_clean_noisy(observer, obs)[2]
@@ -67,16 +82,20 @@ function generate_ground_truth(params::Dict)
     )
 end
 
-function ground_truth_stem(params::Dict)
-    return string(hash(params["ground_truth"]); base=62)
+function ground_truth_stem(params)
+    return string(hash(params.ground_truth); base=62)
 end
 
-function produce_or_load_ground_truth(params::Dict; kwargs...)
-    params_gt = params["ground_truth"]
+
+function produce_or_load_ground_truth(params::JutulJUDIFilterOptions; kwargs...)
+    params_gt = params.ground_truth
     filestem = ground_truth_stem(params)
 
     params_file = datadir("ground_truth", "params", "$filestem.jld2")
-    wsave(params_file, params_gt)
+    wsave(params_file; params=params_gt)
+
+    params_file = datadir("ground_truth", "params", "$filestem-human.yaml")
+    YAML.write_file(params_file, to_dict(params_gt, YAMLStyle))
 
     savedir = datadir("ground_truth", "data")
     data, filepath = produce_or_load(
