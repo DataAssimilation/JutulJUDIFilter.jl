@@ -7,10 +7,14 @@ ENV["jutuljudifilter_force_install"] = "true"
 params_file = abspath(joinpath(@__DIR__, "params", "small-params.jl"))
 push!(ARGS, params_file)
 
-##include("scripts/plot_ground_truth.jl")
-##
-##using Markdown
-##
-##fig_path = relpath(joinpath(savedir, "01.png"))
-##
-##Markdown.parse("![ground truth states]($fig_path)")
+include("scripts/plot_ground_truth.jl")
+
+using Markdown
+
+fig_path = Markdown.parse("""
+![ground truth state 1]($(relpath(joinpath(save_dir, "01.png"))))
+![ground truth state 2]($(relpath(joinpath(save_dir, "02.png"))))
+![ground truth state 3]($(relpath(joinpath(save_dir, "03.png"))))
+![ground truth state 4]($(relpath(joinpath(save_dir, "04.png"))))
+![ground truth state 5]($(relpath(joinpath(save_dir, "05.png"))))
+""")

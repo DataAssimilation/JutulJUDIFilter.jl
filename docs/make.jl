@@ -45,7 +45,7 @@ function gen_runner_code(pth, in_dir, out_dir)
            # Build outputs.
            Literate.markdown(in_pth, out_dir; name="index", preprocess, postprocess, execute=true)
            if build_notebooks
-               Literate.notebook(in_pth, out_dir)
+               Literate.notebook(in_pth, out_dir; execute=false)
            end
            if build_scripts
                Literate.script(in_pth, out_dir)

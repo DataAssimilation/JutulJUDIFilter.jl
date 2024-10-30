@@ -62,16 +62,17 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         "LinearAlgebra",
         "Random",
         "CairoMakie",
+        "Configurations",
         "Statistics",
         "ImageFiltering",
         "JLD2",
         "Format",
-        "Configurations",
         "TerminalLoggers",
         "ProgressLogging",
         "Logging",
         "Markdown",
         "Distributed",
+        "WGLMakie",
         "YAML",
     ])
 

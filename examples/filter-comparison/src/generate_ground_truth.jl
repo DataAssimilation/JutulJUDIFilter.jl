@@ -17,6 +17,7 @@ using Ensembles:
 using Random: Random
 
 using ConfigurationsJutulDarcy
+using Configurations: to_dict, YAMLStyle
 using JutulDarcy
 using JutulDarcy.Jutul
 using Statistics
@@ -34,7 +35,7 @@ function generate_ground_truth(params)
     JMT = JutulModelTranslator(K)
 
     options = params.transition
-    options = JutulOptions(options; time = [TimeDependentOptions(options.time[1]; years = 1.0, steps=1)])
+    options = JutulOptions(options; time = (TimeDependentOptions(options.time[1]; years = 1.0, steps=1),))
     M = JutulModel(; translator=JMT, options)
 
     observation_times = let
@@ -63,12 +64,12 @@ function generate_ground_truth(params)
         t0 = 0.0
         states = Vector{Dict{Symbol,Any}}(undef, length(observation_times))
         observations = Vector{Dict{Symbol,Any}}(undef, length(observation_times))
-        states[1] = state
+        states[1] = deepcopy(state)
         observations[1] = observer(state)
         @progress "Ground-truth" for (i, t) in enumerate(observation_times[2:end])
             state = M(state, t0, t)
             obs = observer(state)
-            states[i + 1] = state
+            states[i + 1] = deepcopy(state)
             observations[i + 1] = split_clean_noisy(observer, obs)[2]
             t0 = t
         end

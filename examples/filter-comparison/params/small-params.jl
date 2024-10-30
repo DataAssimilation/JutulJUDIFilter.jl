@@ -1,45 +1,46 @@
 # Define parameters.
 
 using ConfigurationsJutulDarcy
-using ConfigurationsJutulDarcy.Configurations
+using ConfigurationsJutulDarcy: @option
+using ConfigurationsJutulDarcy: SVector
 using JutulDarcy.Jutul
 
 Darcy, bar, kg, meter, day, yr = si_units(:darcy, :bar, :kilogram, :meter, :day, :year)
-injection_well_trajectory = [
-    645.0 0.5 25.0  # First point
-    660.0 0.5 35.0  # Second point
-    710.0 0.5 40.0  # Third point
-]
+injection_well_trajectory = (
+    SVector(645.0, 0.5, 25.0),  # First point
+    SVector(660.0, 0.5, 35.0),  # Second point
+    SVector(710.0, 0.5, 40.0),  # Third point
+)
 
 DType = Dict{String, Any}
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(100, 1, 50), d=(1e1, 1e0, 1e0)),
     system=CO2BrineOptions(; co2_physics=:immiscible, thermal=false),
-    porosity=FieldOptions(; value=0.2),
-    permeability=FieldOptions(; value=1.0Darcy),
-    temperature=FieldOptions(; value=convert_to_si(30.0, :Celsius)),
-    rock_density=FieldOptions(; value=30.0),
-    rock_heat_capacity=FieldOptions(; value=900.0),
-    rock_thermal_conductivity=FieldOptions(; value=3.0),
-    fluid_thermal_conductivity=FieldOptions(; value=0.6),
-    component_heat_capacity=FieldOptions(; value=4184.0),
+    porosity=FieldOptions(0.2),
+    permeability=FieldOptions(1.0Darcy),
+    temperature=FieldOptions(convert_to_si(30.0, :Celsius)),
+    rock_density=FieldOptions(30.0),
+    rock_heat_capacity=FieldOptions(900.0),
+    rock_thermal_conductivity=FieldOptions(3.0),
+    fluid_thermal_conductivity=FieldOptions(0.6),
+    component_heat_capacity=FieldOptions(4184.0),
     injection=WellOptions(; trajectory=injection_well_trajectory, name=:Injector),
-    time=[
+    time=(
         TimeDependentOptions(;
             years=1.0,
             steps=1,
-            controls=[
+            controls=(
                 WellRateOptions(;
                     type="injector",
                     name=:Injector,
                     fluid_density=9e2,
                     rate_mtons_year=2.05e-5,
                 ),
-            ],
+            ),
         ),
         # TimeDependentOptions(; years=475.0, steps=475, controls=[]),
-    ],
+    ),
 )
 
 
@@ -62,7 +63,6 @@ end
     version = "v0.3"
     ground_truth::ModelOptions
 end
-
 
 
 function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
