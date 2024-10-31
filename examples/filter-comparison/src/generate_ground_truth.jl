@@ -22,7 +22,7 @@ using JutulDarcy
 using JutulDarcy.Jutul
 using Statistics
 using LinearAlgebra
-import YAML
+using YAML: YAML
 
 include("jutul_model.jl")
 
@@ -35,7 +35,9 @@ function generate_ground_truth(params)
     JMT = JutulModelTranslator(K)
 
     options = params.transition
-    options = JutulOptions(options; time = (TimeDependentOptions(options.time[1]; years = 1.0, steps=1),))
+    options = JutulOptions(
+        options; time=(TimeDependentOptions(options.time[1]; years=1.0, steps=1),)
+    )
     M = JutulModel(; translator=JMT, options)
 
     observation_times = let
@@ -53,7 +55,7 @@ function generate_ground_truth(params)
     xor_seed!(observer, UInt64(0x243ecae5))
 
     ground_truth = @time let
-        state = Dict{Symbol, Any}()
+        state = Dict{Symbol,Any}()
         sim_to_member!(JMT, state, M.state0, M.domain)
 
         ## Set seed for ground-truth simulation.
@@ -86,7 +88,6 @@ end
 function ground_truth_stem(params)
     return string(hash(params.ground_truth); base=62)
 end
-
 
 function produce_or_load_ground_truth(params::JutulJUDIFilterOptions; kwargs...)
     params_gt = params.ground_truth

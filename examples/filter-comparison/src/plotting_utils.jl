@@ -1,16 +1,19 @@
 
-using CairoMakie: Figure, Axis, Colorbar, colsize!, Aspect, resize_to_layout!, xlims!, ylims!, contourf
+using CairoMakie:
+    Figure, Axis, Colorbar, colsize!, Aspect, resize_to_layout!, xlims!, ylims!, contourf
 
 function plot_heatmap_from_grid!(ax, a, grid; kwargs...)
-    plot_heatmap_from_grid!(ax, a; dims=grid.n, deltas=grid.d, origin=grid.origin, kwargs...)
+    return plot_heatmap_from_grid!(
+        ax, a; dims=grid.n, deltas=grid.d, origin=grid.origin, kwargs...
+    )
 end
 
 function plot_heatmap_from_grid(args...; make_colorbar=false, kwargs...)
     fig = Figure()
-    ax = Axis(fig[1,1], yreversed=true)
+    ax = Axis(fig[1, 1]; yreversed=true)
     hm = plot_heatmap_from_grid!(ax, args...; kwargs...)
     if make_colorbar
-        Colorbar(fig[:, end+1], hm)
+        Colorbar(fig[:, end + 1], hm)
     end
     return fig, ax, hm
 end
@@ -18,22 +21,33 @@ end
 function rescale_heatmap_to_grid!(fig; dims, deltas=(1, 1), origin=(0, 0))
     aspect = (dims[1] * deltas[1]) / (dims[end] * deltas[end])
     colsize!(fig.layout, 1, Aspect(1, aspect))
-    resize_to_layout!(fig)
+    return resize_to_layout!(fig)
 end
 
 function get_coordinate_corners(; dims, deltas, origin)
-    xs = range(0; length = dims[1]+1, step = deltas[1]) .- origin[1]
-    ys = range(0; length = dims[end]+1, step = deltas[end]) .- origin[end]
+    xs = range(0; length=dims[1] + 1, step=deltas[1]) .- origin[1]
+    ys = range(0; length=dims[end] + 1, step=deltas[end]) .- origin[end]
     return xs, ys
 end
 
 function get_coordinates_cells(; dims, deltas, origin)
-    xs = deltas[1]/2 .+ range(0; length = dims[1], step = deltas[1]) .- origin[1]
-    ys = deltas[end]/2 .+ range(0; length = dims[end], step = deltas[end]) .- origin[end]
+    xs = deltas[1] / 2 .+ range(0; length=dims[1], step=deltas[1]) .- origin[1]
+    ys = deltas[end] / 2 .+ range(0; length=dims[end], step=deltas[end]) .- origin[end]
     return xs, ys
 end
 
-function plot_heatmap_from_grid!(ax, a; dims, deltas=(1, 1), origin=(0, 0), colorrange=nothing, fix_colorrange=true, make_divergent=false, make_heatmap = false, kwargs...)
+function plot_heatmap_from_grid!(
+    ax,
+    a;
+    dims,
+    deltas=(1, 1),
+    origin=(0, 0),
+    colorrange=nothing,
+    fix_colorrange=true,
+    make_divergent=false,
+    make_heatmap=false,
+    kwargs...,
+)
     if make_heatmap
         xs, ys = get_coordinate_corners(; dims, deltas, origin)
     else
@@ -60,12 +74,14 @@ function plot_heatmap_from_grid!(ax, a; dims, deltas=(1, 1), origin=(0, 0), colo
             levels = @lift(range($colorrange[1], $colorrange[2], levels_orig))
         elseif mode == :relative
             levels_orig = levels
-            levels = @lift(levels_orig .* ($colorrange[2] - $colorrange[1]) .+ $colorrange[1])
+            levels = @lift(
+                levels_orig .* ($colorrange[2] - $colorrange[1]) .+ $colorrange[1]
+            )
         end
         hm = contourf!(ax, xs, ys, a; levels, kwargs...)
     end
-    xlims!(ax, - origin[1], dims[1] * deltas[1] - origin[1])
-    ylims!(ax, dims[end] * deltas[end] - origin[end], - origin[end])
+    xlims!(ax, -origin[1], dims[1] * deltas[1] - origin[1])
+    ylims!(ax, dims[end] * deltas[end] - origin[end], -origin[end])
     rescale_heatmap_to_grid!(ax.parent; dims, deltas, origin)
     return hm
 end
