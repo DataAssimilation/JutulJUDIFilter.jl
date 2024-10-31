@@ -15,8 +15,10 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
     @withprogress name = "state vs t" let
         # Get mesh parameters in kilometers.
         grid = params.transition.mesh
-        grid = MeshOptions(grid; d=grid.d./1e3, origin=grid.origin./1e3)
-        grid_2d = MeshOptions(grid; d=grid.d[[1,end]], origin=grid.origin[[1,end]], n=grid.n[[1,end]])
+        grid = MeshOptions(grid; d=grid.d ./ 1e3, origin=grid.origin ./ 1e3)
+        grid_2d = MeshOptions(
+            grid; d=grid.d[[1, end]], origin=grid.origin[[1, end]], n=grid.n[[1, end]]
+        )
 
         save_dir = joinpath(save_dir_root, "plume")
         mkpath(save_dir)
@@ -33,11 +35,13 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
         data = @lift($state[:Saturation])
         data_zeros = @lift(ifelse.($data .== 0, NaN, $data))
         shaped_data = @lift(reshape($data_zeros, grid_2d.n))
-        hm = plot_heatmap_from_grid!(ax, shaped_data, grid_2d; make_heatmap=true, colorrange=(0,1))
+        hm = plot_heatmap_from_grid!(
+            ax, shaped_data, grid_2d; make_heatmap=true, colorrange=(0, 1)
+        )
 
         time_str = @lift(string(L"t = ", cfmt("%.3g", $t), " seconds"))
-        Label(fig[1, 1, Top()], time_str, halign = :center, valign = :bottom, font = :bold)
-        Colorbar(fig[:, end+1], hm)
+        Label(fig[1, 1, Top()], time_str; halign=:center, valign=:bottom, font=:bold)
+        Colorbar(fig[:, end + 1], hm)
 
         ax.xlabel = "Horizontal (km)"
         ax.ylabel = "Depth (km)"
@@ -53,4 +57,3 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
         end
     end
 end
-

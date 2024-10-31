@@ -12,7 +12,7 @@ injection_well_trajectory = (
     SVector(710.0, 0.5, 40.0),  # Third point
 )
 
-DType = Dict{String, Any}
+DType = Dict{String,Any}
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(100, 1, 50), d=(1e1, 1e0, 1e0)),
@@ -43,7 +43,6 @@ params_transition = JutulOptions(;
     ),
 )
 
-
 @option struct NoisyObservationOptions
     noise_scale = 2
     timestep_size = 0.1
@@ -58,12 +57,10 @@ end
     observation::NoisyObservationOptions
 end
 
-
 @option struct JutulJUDIFilterOptions
     version = "v0.3"
     ground_truth::ModelOptions
 end
-
 
 function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
     noise_scale = params.noise_scale
@@ -83,14 +80,10 @@ function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
     return NoisyObserver(op, state_keys, noise_scale, rng, seed, params.only_noisy)
 end
 
-
 params2 = JutulJUDIFilterOptions(;
-    ground_truth = ModelOptions(;
-        transition = params_transition,
-        observation = NoisyObservationOptions(
-            num_timesteps = 5,
-        )
-    )
+    ground_truth=ModelOptions(;
+        transition=params_transition, observation=NoisyObservationOptions(; num_timesteps=5)
+    ),
 )
 
 # params = DType(
@@ -102,7 +95,6 @@ params2 = JutulJUDIFilterOptions(;
 #             DType("noise_scale" => 2, "timestep_size" => 0.1, "num_timesteps" => 5),
 #     )
 # )
-
 
 # params_transition = DType(
 #     "sigma" => 10,

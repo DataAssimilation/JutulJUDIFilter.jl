@@ -6,7 +6,7 @@ macro codegen_copy_constructor(T)
                 default_kwargs = (f => getfield(x, f) for f in fieldnames($T))
                 return $T(; default_kwargs..., kwargs...)
             end
-        end
+        end,
     )
 end
 

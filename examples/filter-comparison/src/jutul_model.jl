@@ -1,13 +1,20 @@
 import Ensembles: AbstractOperator, get_state_keys
 using ConfigurationsJutulDarcy
-using JutulDarcy: setup_reservoir_model, reservoir_domain, reservoir_model, setup_well, setup_reservoir_state, flow_boundary_condition, setup_reservoir_forces, simulate_reservoir
+using JutulDarcy:
+    setup_reservoir_model,
+    reservoir_domain,
+    reservoir_model,
+    setup_well,
+    setup_reservoir_state,
+    flow_boundary_condition,
+    setup_reservoir_forces,
+    simulate_reservoir
 using JutulDarcy.Jutul: find_enclosing_cells, jutul_output_path
 
 JutulDarcyExt = Base.get_extension(ConfigurationsJutulDarcy, :JutulDarcyExt)
 using .JutulDarcyExt: create_field
 
-struct JutulModelTranslator{K}
-end
+struct JutulModelTranslator{K} end
 JutulModelTranslator(K) = JutulModelTranslator(typeof(K))
 
 JutulModelTranslatorDomainKeys = (Val{:Permeability},)
@@ -20,42 +27,59 @@ function JutulModelTranslator(K::Type)
         error("K must be a tuple")
     end
     for k in fieldtypes(K)
-        if ! (k <: Val)
+        if !(k <: Val)
             error("expected Val but got $k")
         end
-        if length(k.parameters) != 1 || ! (k.parameters[1] isa Symbol)
+        if length(k.parameters) != 1 || !(k.parameters[1] isa Symbol)
             error("expected Symbol but got $(k.parameters)")
         end
     end
-    JutulModelTranslator{K}()
+    return JutulModelTranslator{K}()
 end
 
-
-sim_to_member(::Val{:Saturation}, state, domain_params) = state[:Reservoir][:Saturations][2, :]
+function sim_to_member(::Val{:Saturation}, state, domain_params)
+    return state[:Reservoir][:Saturations][2, :]
+end
 sim_to_member(::Val{:Pressure}, state, domain_params) = state[:Reservoir][:Pressure]
 
-function sim_to_member!(T::JutulModelTranslator{K}, member, state, domain_params) where {K<:Tuple}
-    merge!(member, Dict(k.parameters[1] => sim_to_member(k(), state, domain_params) for k in fieldtypes(K)))
+function sim_to_member!(
+    T::JutulModelTranslator{K}, member, state, domain_params
+) where {K<:Tuple}
+    return merge!(
+        member,
+        Dict(
+            k.parameters[1] => sim_to_member(k(), state, domain_params) for
+            k in fieldtypes(K)
+        ),
+    )
 end
 
 function sim_to_member!(T::JutulModelTranslator{K}, member, state) where {K<:Tuple}
-    merge!(member, Dict(k.parameters[1] => sim_to_member(k(), state, nothing) for k in fieldtypes(K) if !(k in JutulModelTranslatorDomainKeys)))
+    return merge!(
+        member,
+        Dict(
+            k.parameters[1] => sim_to_member(k(), state, nothing) for
+            k in fieldtypes(K) if !(k in JutulModelTranslatorDomainKeys)
+        ),
+    )
 end
 
 function member_to_sim!(::Val{:Saturation}, member, state, domain_params)
     state[:Reservoir][:Saturations][2, :] .= member[:Saturation]
-    state[:Reservoir][:Saturations][1, :] .= 1 .- member[:Saturation]
+    return state[:Reservoir][:Saturations][1, :] .= 1 .- member[:Saturation]
 end
 
 function member_to_sim!(::Val{:Pressure}, member, state, domain_params)
-    state[:Reservoir][:Pressure] .= member[:Pressure]
+    return state[:Reservoir][:Pressure] .= member[:Pressure]
 end
 
 function member_to_sim!(::Val{:Permeability}, member, state, domain_params)
-    domain_params[:permeability] .= member[:Permeability]
+    return domain_params[:permeability] .= member[:Permeability]
 end
 
-function member_to_sim!(T::JutulModelTranslator{K}, member, state, domain_params) where {K<:Tuple}
+function member_to_sim!(
+    T::JutulModelTranslator{K}, member, state, domain_params
+) where {K<:Tuple}
     for k in fieldtypes(K)
         member_to_sim!(k(), member, state, domain_params)
     end
@@ -96,7 +120,6 @@ end
 #     return states[:, end]
 # end
 
-
 mutable struct JutulModel6{K} <: AbstractOperator
     translator::JutulModelTranslator{K}
     options
@@ -118,16 +141,15 @@ function JutulModel6(; options, translator, kwargs=(;))
     domain = reservoir_domain(mesh, options)
     wells = setup_well(domain, options.injection)
     model = setup_reservoir_model(domain, options.system; wells, extra_out=false)
-    parameters = setup_parameters(model);
+    parameters = setup_parameters(model)
 
     nc = number_of_cells(mesh)
     depth = domain[:cell_centroids][3, :]
     g = Jutul.gravity_constant
     p0 = 200bar .+ depth .* g .* 1000.0
 
-    state0 = setup_reservoir_state(model, options.system;
-        Pressure = p0,
-        Saturations = [1.0, 0.0]
+    state0 = setup_reservoir_state(
+        model, options.system; Pressure=p0, Saturations=[1.0, 0.0]
     )
     # # contacts is the length of the number of phases minus one.
     # # For each non-reference phase i, contacts[i] is the datum_depth for that phase-pressure table.
@@ -148,7 +170,9 @@ function JutulModel6(; options, translator, kwargs=(;))
     if isa(temperatures, Array)
         temperatures = temperatures[boundary]
     end
-    bc = flow_boundary_condition(boundary, domain, p0[boundary], temperatures; fractional_flow=[1.0, 0.0])
+    bc = flow_boundary_condition(
+        boundary, domain, p0[boundary], temperatures; fractional_flow=[1.0, 0.0]
+    )
     dt, forces = setup_reservoir_forces(model, options.time; bc)
     dt = dt[1:1]
     forces = forces[1:1]
@@ -164,10 +188,9 @@ function JutulModel6(; options, translator, kwargs=(;))
         dt,
         forces,
         model,
-        parameters
+        parameters,
     )
 end
-
 
 # function (M::JutulModel)(member::Dict)
 #     state0 = get_state0(member)
@@ -196,7 +219,6 @@ end
 #     return Dict(:state=>full_final_state, :parameters=>full_parameters)
 # end
 
-
 # function (M::JutulModel{K})(member::Dict) where K
 #     state0 = M.state0
 #     parameters = M.parameters
@@ -215,7 +237,7 @@ end
 #     return member
 # end
 
-function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where K
+function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where {K}
     state0 = M.state0
     parameters = M.parameters
     model = M.model
@@ -228,9 +250,7 @@ function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where K
     if modifies_domain(M.translator)
         parameters = setup_parameters(model)
     end
-    result = simulate_reservoir(
-        state0, model, dt; parameters, forces, M.kwargs...
-    )
+    result = simulate_reservoir(state0, model, dt; parameters, forces, M.kwargs...)
     final_state = result.result.states[end]
     sim_to_member!(M.translator, member, final_state)
     return member
