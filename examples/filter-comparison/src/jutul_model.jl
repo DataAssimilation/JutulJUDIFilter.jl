@@ -140,13 +140,18 @@ function JutulModel6(; options, translator, kwargs=(;))
     mesh = CartesianMesh(options.mesh)
     domain = reservoir_domain(mesh, options)
     wells = setup_well(domain, options.injection)
-    model = setup_reservoir_model(domain, options.system; wells, extra_out=false)
-    parameters = setup_parameters(model)
+    if get_label(options.system) == :co2brine
+        model = setup_reservoir_model(domain, options.system; wells, extra_out=false)
+        parameters = setup_parameters(model);
+    else
+        model, parameters = setup_reservoir_model(domain, options.system; wells, extra_out=true)
+    end
 
     nc = number_of_cells(mesh)
     depth = domain[:cell_centroids][3, :]
     g = Jutul.gravity_constant
     p0 = 200bar .+ depth .* g .* 1000.0
+    # p0 = ρH2O * g * (Z .+ M.h) # rho * g * h
 
     state0 = setup_reservoir_state(
         model, options.system; Pressure=p0, Saturations=[1.0, 0.0]

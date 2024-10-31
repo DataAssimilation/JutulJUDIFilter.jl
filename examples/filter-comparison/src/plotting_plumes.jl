@@ -10,6 +10,7 @@ using ProgressLogging: @withprogress, @logprogress
 using CairoMakie
 
 include(srcdir("plotting_utils.jl"))
+include(srcdir("parula.jl"))
 
 function plot_plume_data(observation_times, states, save_dir_root, params)
     @withprogress name = "state vs t" let
@@ -33,15 +34,14 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
         t = @lift(observation_times[$t_index])
 
         data = @lift($state[:Saturation])
-        data_zeros = @lift(ifelse.($data .== 0, NaN, $data))
+        data_thresholded = @lift(ifelse.(abs.($data) .< 0, 0, $data))
+        data_zeros = @lift(ifelse.($data_thresholded .== 0, NaN, $data_thresholded))
         shaped_data = @lift(reshape($data_zeros, grid_2d.n))
-        hm = plot_heatmap_from_grid!(
-            ax, shaped_data, grid_2d; make_heatmap=true, colorrange=(0, 1)
-        )
+        hm = plot_heatmap_from_grid!(ax, shaped_data, grid_2d; make_heatmap=true, colormap=parula, colorrange=(0,1))
 
-        time_str = @lift(string(L"t = ", cfmt("%.3g", $t), " seconds"))
-        Label(fig[1, 1, Top()], time_str; halign=:center, valign=:bottom, font=:bold)
-        Colorbar(fig[:, end + 1], hm)
+        time_str = @lift(string("t = ", cfmt("%.3g", $t/3600/24/365.2425), " years"))
+        Label(fig[1, 1, Top()], time_str, halign = :center, valign = :bottom, font = :bold)
+        Colorbar(fig[:, end+1], hm)
 
         ax.xlabel = "Horizontal (km)"
         ax.ylabel = "Depth (km)"
