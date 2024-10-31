@@ -12,9 +12,9 @@ include("scripts/plot_ground_truth.jl")
 using Markdown
 
 fig_path = Markdown.parse("""
-![ground truth state 1]($(relpath(joinpath(save_dir, "01.png"))))
-![ground truth state 2]($(relpath(joinpath(save_dir, "02.png"))))
-![ground truth state 3]($(relpath(joinpath(save_dir, "03.png"))))
-![ground truth state 4]($(relpath(joinpath(save_dir, "04.png"))))
-![ground truth state 5]($(relpath(joinpath(save_dir, "05.png"))))
+![ground truth state 1]($(relpath(joinpath(save_dir, "plume", "01.png"))))
+![ground truth state 2]($(relpath(joinpath(save_dir, "plume", "02.png"))))
+![ground truth state 3]($(relpath(joinpath(save_dir, "plume", "03.png"))))
+![ground truth state 4]($(relpath(joinpath(save_dir, "plume", "04.png"))))
+![ground truth state 5]($(relpath(joinpath(save_dir, "plume", "05.png"))))
 """)
