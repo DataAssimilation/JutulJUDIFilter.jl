@@ -27,7 +27,7 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
     # Plot first saturation.
     fig_scale = 96
     heatmap_aspect = get_grid_col_aspect(grid_2d)
-    content_height = round(Int, 6*fig_scale)
+    content_height = round(Int, 6 * fig_scale)
     content_size = (round(Int, content_height * heatmap_aspect), content_height)
     fig = Figure(; size=content_size)
     content_grid_position = fig[1, 1]
@@ -38,76 +38,97 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
     year = 3600 * 24 * 365.2425
     previous_num_blocks = length(fig.content)
 
-    controls_height = 4*fig_scale
+    controls_height = 4 * fig_scale
     resize!(fig, content_size[1], content_size[2] + controls_height)
-    controls_layout_size = (; width = Auto(), height=Fixed(controls_height))
+    controls_layout_size = (; width=Auto(), height=Fixed(controls_height))
     controls_layout = GridLayout(fig[2, 1]; controls_layout_size...)
     colsize!(controls_layout, 1, Relative(1))
 
-
     controls_time_position = controls_layout[1, 1]
     controls_time_layout = get_padding_layout(controls_time_position)
-    add_box(controls_time_position; cornerradius = 10, color = (:yellow, 0.1), strokecolor = :transparent)
+    add_box(
+        controls_time_position;
+        cornerradius=10,
+        color=(:yellow, 0.1),
+        strokecolor=:transparent,
+    )
 
     slider_grid = SliderGrid(
-        controls_time_layout[1,1],
+        controls_time_layout[1, 1],
         (
-            label = "Time",
-            range = 1:length(states),
-            format = i -> "$(observation_times[i]/year) years",
-            startvalue = 6
+            label="Time",
+            range=1:length(states),
+            format=i -> "$(observation_times[i]/year) years",
+            startvalue=6,
         ),
     )
 
     controls_colormap_position = controls_layout[2, 1]
-    controls_colormap_layout = get_padding_layout(controls_colormap_position; top=0f0)
-    add_box(controls_colormap_position; cornerradius = 10, color = (:blue, 0.1), strokecolor = :transparent)
+    controls_colormap_layout = get_padding_layout(controls_colormap_position; top=0.0f0)
+    add_box(
+        controls_colormap_position;
+        cornerradius=10,
+        color=(:blue, 0.1),
+        strokecolor=:transparent,
+    )
 
-    Label(controls_colormap_layout[1, 1], "Colorbar options", halign = :center, valign = :center)
+    Label(
+        controls_colormap_layout[1, 1], "Colorbar options"; halign=:center, valign=:center
+    )
 
     colormap_selector = let layout = controls_colormap_layout[1, 2]
         function colormap_validator(colormap)
-            return colormap == "" || isnothing(colormap) || colormap == "parula" || colormap in Makie.all_gradient_names
+            return colormap == "" ||
+                   isnothing(colormap) ||
+                   colormap == "parula" ||
+                   colormap in Makie.all_gradient_names
         end
-        colormap_selector = Textbox(layout[1, 1],
-            placeholder = "colormap",
-            validator = colormap_validator,
-            boxcolor = RGBf(0.94, 0.94, 0.94),
-            boxcolor_focused = RGBf(0.94, 0.94, 0.94),
-            boxcolor_focused_invalid = RGBf(0.94, 0.94, 0.94),
-            width = 200,
+        colormap_selector = Textbox(
+            layout[1, 1];
+            placeholder="colormap",
+            validator=colormap_validator,
+            boxcolor=RGBf(0.94, 0.94, 0.94),
+            boxcolor_focused=RGBf(0.94, 0.94, 0.94),
+            boxcolor_focused_invalid=RGBf(0.94, 0.94, 0.94),
+            width=200,
         )
     end
 
     colormap_reversor = let layout = controls_colormap_layout[1, 3]
-        Button(layout[1,1], label = "Reverse colormap")
+        Button(layout[1, 1]; label="Reverse colormap")
     end
 
     colorscale_options = [("linear", identity), ("log10", log10)]
     colorscale_menu = let layout = controls_colormap_layout[1, 4]
-        Menu(layout[1, 1]; options = colorscale_options, default = "linear")
+        Menu(layout[1, 1]; options=colorscale_options, default="linear")
     end
 
-    colorrange_slider = IntervalSlider(controls_colormap_layout[2, :];
-        range = LinRange(0, 1, 1000),
-        startvalues = (0.0, 1.0),
-        horizontal = true,
+    colorrange_slider = IntervalSlider(
+        controls_colormap_layout[2, :];
+        range=LinRange(0, 1, 1000),
+        startvalues=(0.0, 1.0),
+        horizontal=true,
     )
 
     controls_other_position = controls_layout[3, 1]
-    controls_other_layout = get_padding_layout(controls_other_position; top=0f0)
-    add_box(controls_other_position; cornerradius = 10, color = (:green, 0.1), strokecolor = :transparent)
+    controls_other_layout = get_padding_layout(controls_other_position; top=0.0f0)
+    add_box(
+        controls_other_position;
+        cornerradius=10,
+        color=(:green, 0.1),
+        strokecolor=:transparent,
+    )
 
-    axis_reset = Button(controls_other_layout[:, 1], label = "Reset view")
+    axis_reset = Button(controls_other_layout[:, 1]; label="Reset view")
 
     interactive_savor = let layout = controls_other_layout[1, 2]
-        Label(layout[1, 1], "Save images after closing", halign = :center, valign = :center)
-        Toggle(layout[1, 2], active = false)
+        Label(layout[1, 1], "Save images after closing"; halign=:center, valign=:center)
+        Toggle(layout[1, 2]; active=false)
     end
 
     hide_controls = let layout = controls_other_layout[2, 2]
-        Label(layout[1, 1], "Hide controls (toggle with 'k')", halign = :center, valign = :center)
-        Toggle(layout[1,2], active=false)
+        Label(layout[1, 1], "Hide controls (toggle with 'k')"; halign=:center, valign=:center)
+        Toggle(layout[1, 2]; active=false)
     end
 
     t_idx = slider_grid.sliders[1].value
@@ -127,7 +148,7 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
             colormap[] = Reverse(colormap.val)
         end
     end
-    interactive_blocks = copy(fig.content[previous_num_blocks+1:end])
+    interactive_blocks = copy(fig.content[(previous_num_blocks + 1):end])
 
     notify(colorscale_menu.selection)
 
@@ -170,22 +191,26 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
             highclip[] = nothing
         end
     end
-    hm = plot_heatmap_from_grid!(ax, shaped_data, grid_2d; make_heatmap=true,
+    hm = plot_heatmap_from_grid!(
+        ax,
+        shaped_data,
+        grid_2d;
+        make_heatmap=true,
         colormap,
         lowclip,
         highclip,
         colorscale,
-        colorrange
+        colorrange,
     )
 
-    time_str = @lift(latexstring("\$t\$ = ", cfmt("%.3g", $t/year), " years"))
+    time_str = @lift(latexstring("\$t\$ = ", cfmt("%.3g", $t / year), " years"))
     Colorbar(content_layout[1, 2], hm)
-    Label(content_layout[1, 1, Top()], time_str, halign = :center, valign = :bottom, font = :bold)
+    Label(content_layout[1, 1, Top()], time_str; halign=:center, valign=:bottom, font=:bold)
     ax.xlabel = "Horizontal (km)"
     ax.ylabel = "Depth (km)"
 
     colsize!(content_layout, 1, Aspect(1, heatmap_aspect))
-    hidespines!(ax) 
+    hidespines!(ax)
 
     on(axis_reset.clicks) do n
         reset_limits!(ax)
@@ -211,7 +236,6 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
         end
     end
 
-
     onany(fig.scene.viewport, hide_controls.active) do v, hide_controls_active
         # Compute content width based on height of figure, controls, and content aspect.
         if hide_controls_active
@@ -221,7 +245,7 @@ function plot_plume_data(observation_times, states, save_dir_root, params)
         end
         if v.widths[1] < content_width
             colsize!(content_layout, 1, Auto())
-            rowsize!(content_layout, 1, Aspect(1, 1/heatmap_aspect))
+            rowsize!(content_layout, 1, Aspect(1, 1 / heatmap_aspect))
         else
             rowsize!(content_layout, 1, Auto())
             colsize!(content_layout, 1, Aspect(1, heatmap_aspect))

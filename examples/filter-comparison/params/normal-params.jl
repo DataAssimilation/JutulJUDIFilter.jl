@@ -10,28 +10,35 @@ mD_to_meters2 = 1e-3 * Darcy
 
 injection_well_trajectory = (
     SVector(1875.0, 50.0, 1775.0),  # First point
-    SVector(1875.0, 50.0, 1775.0+37.5),  # Second point
+    SVector(1875.0, 50.0, 1775.0 + 37.5),  # Second point
 )
 
-DType = Dict{String, Any}
+DType = Dict{String,Any}
 
 complex_system = CO2BrineOptions(; co2_physics=:immiscible, thermal=false)
 
 simple_system = CO2BrineSimpleOptions(;
-    viscosity_CO2 = 1e-4,
-    viscosity_H2O = 1e-3,
-    density_CO2 = 501.9,
-    density_H2O = 1053.0,
-    reference_pressure = 1.5e7,
-    compressibility_CO2 = 8e-9,
-    compressibility_H2O = 3.6563071e-10,
+    viscosity_CO2=1e-4,
+    viscosity_H2O=1e-3,
+    density_CO2=501.9,
+    density_H2O=1053.0,
+    reference_pressure=1.5e7,
+    compressibility_CO2=8e-9,
+    compressibility_H2O=3.6563071e-10,
 )
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(325, 1, 341), d=(12.5, 1e2, 6.25)),
     system=complex_system,
     porosity=FieldOptions(0.25),
-    permeability=FieldOptions(; suboptions=FieldFileOptions(; file="compass/broad&narrow_perm_models_new.jld2", key="K", scale=mD_to_meters2, resize=true)),
+    permeability=FieldOptions(;
+        suboptions=FieldFileOptions(;
+            file="compass/broad&narrow_perm_models_new.jld2",
+            key="K",
+            scale=mD_to_meters2,
+            resize=true,
+        ),
+    ),
     permeability_v_over_h=0.36,
     temperature=FieldOptions(convert_to_si(30.0, :Celsius)),
     rock_density=FieldOptions(30.0),
@@ -57,7 +64,6 @@ params_transition = JutulOptions(;
     ),
 )
 
-
 @option struct NoisyObservationOptions
     noise_scale = 2
     timestep_size = 1yr
@@ -72,12 +78,10 @@ end
     observation::NoisyObservationOptions
 end
 
-
 @option struct JutulJUDIFilterOptions
     version = "v0.3"
     ground_truth::ModelOptions
 end
-
 
 function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
     noise_scale = params.noise_scale
@@ -97,12 +101,8 @@ function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
     return NoisyObserver(op, state_keys, noise_scale, rng, seed, params.only_noisy)
 end
 
-
 params = JutulJUDIFilterOptions(;
-    ground_truth = ModelOptions(;
-        transition = params_transition,
-        observation = NoisyObservationOptions(
-            num_timesteps = 5,
-        )
-    )
+    ground_truth=ModelOptions(;
+        transition=params_transition, observation=NoisyObservationOptions(; num_timesteps=5)
+    ),
 )

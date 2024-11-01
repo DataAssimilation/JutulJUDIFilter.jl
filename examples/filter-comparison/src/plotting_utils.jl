@@ -85,15 +85,14 @@ function plot_heatmap_from_grid!(
     return hm
 end
 
-function get_padding_layout(grid_position; left=5f0, top=5f0, right=5f0, bottom=5f0)
+function get_padding_layout(grid_position; left=5.0f0, top=5.0f0, right=5.0f0, bottom=5.0f0)
     padding_layout = GridLayout(grid_position, 3, 3)
     rowsize!(padding_layout, 1, Fixed(top))
     rowsize!(padding_layout, 3, Fixed(bottom))
     colsize!(padding_layout, 1, Fixed(left))
     colsize!(padding_layout, 3, Fixed(right))
-    return GridLayout(padding_layout[2,2])
+    return GridLayout(padding_layout[2, 2])
 end
-
 
 function add_box(grid_position; z=-100, kwargs...)
     b = Box(grid_position; kwargs...)

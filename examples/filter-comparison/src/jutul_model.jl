@@ -136,10 +136,8 @@ mutable struct JutulModel6{K} <: AbstractOperator
 end
 JutulModel = JutulModel6
 
-function JutulDarcy.setup_reservoir_state(
-    model, options::CO2BrineSimpleOptions; kwargs...
-)
-    state0 = setup_reservoir_state(model; kwargs...)
+function JutulDarcy.setup_reservoir_state(model, options::CO2BrineSimpleOptions; kwargs...)
+    return state0 = setup_reservoir_state(model; kwargs...)
 end
 
 function JutulModel6(; options, translator, kwargs=(;))
@@ -148,9 +146,11 @@ function JutulModel6(; options, translator, kwargs=(;))
     wells = setup_well(domain, options.injection)
     if get_label(options.system) == :co2brine
         model = setup_reservoir_model(domain, options.system; wells, extra_out=false)
-        parameters = setup_parameters(model);
+        parameters = setup_parameters(model)
     else
-        model, parameters = setup_reservoir_model(domain, options.system; wells, extra_out=true)
+        model, parameters = setup_reservoir_model(
+            domain, options.system; wells, extra_out=true
+        )
     end
 
     nc = number_of_cells(mesh)
