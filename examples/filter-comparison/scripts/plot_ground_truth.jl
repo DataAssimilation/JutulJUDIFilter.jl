@@ -27,5 +27,7 @@ save_dir = plotsdir("ground_truth", "states", filestem_gt)
 params_gt = params.ground_truth
 with_theme(theme_latexfonts()) do
     update_theme!(; fontsize=30)
-    plot_plume_data(observation_times, states, save_dir, params_gt)
+    return plot_plume_data(observation_times, states, save_dir, params_gt)
 end
+
+nothing

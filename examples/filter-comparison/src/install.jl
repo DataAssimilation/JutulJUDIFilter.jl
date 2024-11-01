@@ -74,6 +74,7 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         "Distributed",
         "WGLMakie",
         "YAML",
+        "Makie",
     ])
 
     Pkg.instantiate()

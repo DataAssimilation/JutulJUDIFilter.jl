@@ -136,6 +136,12 @@ mutable struct JutulModel6{K} <: AbstractOperator
 end
 JutulModel = JutulModel6
 
+function JutulDarcy.setup_reservoir_state(
+    model, options::CO2BrineSimpleOptions; kwargs...
+)
+    state0 = setup_reservoir_state(model; kwargs...)
+end
+
 function JutulModel6(; options, translator, kwargs=(;))
     mesh = CartesianMesh(options.mesh)
     domain = reservoir_domain(mesh, options)

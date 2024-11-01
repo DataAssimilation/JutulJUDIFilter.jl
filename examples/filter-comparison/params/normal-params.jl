@@ -29,14 +29,14 @@ simple_system = CO2BrineSimpleOptions(;
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(325, 1, 341), d=(12.5, 1e2, 6.25)),
-    system=simple_system,
+    system=complex_system,
     porosity=FieldOptions(0.25),
     permeability=FieldOptions(; suboptions=FieldFileOptions(; file="compass/broad&narrow_perm_models_new.jld2", key="K", scale=mD_to_meters2, resize=true)),
     permeability_v_over_h=0.36,
     temperature=FieldOptions(convert_to_si(30.0, :Celsius)),
     rock_density=FieldOptions(30.0),
     rock_heat_capacity=FieldOptions(900.0),
-    rock_thermal_conductivity=FieldOptions(3.00000001),
+    rock_thermal_conductivity=FieldOptions(3),
     fluid_thermal_conductivity=FieldOptions(0.6),
     component_heat_capacity=FieldOptions(4184.0),
     injection=WellOptions(; trajectory=injection_well_trajectory, name=:Injector),

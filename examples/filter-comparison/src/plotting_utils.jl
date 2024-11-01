@@ -1,5 +1,5 @@
 
-using CairoMakie:
+using Makie:
     Figure, Axis, Colorbar, colsize!, Aspect, resize_to_layout!, xlims!, ylims!, contourf
 
 function plot_heatmap_from_grid!(ax, a, grid; kwargs...)
@@ -18,11 +18,11 @@ function plot_heatmap_from_grid(args...; make_colorbar=false, kwargs...)
     return fig, ax, hm
 end
 
-function rescale_heatmap_to_grid!(fig; dims, deltas=(1, 1), origin=(0, 0))
-    aspect = (dims[1] * deltas[1]) / (dims[end] * deltas[end])
-    colsize!(fig.layout, 1, Aspect(1, aspect))
-    return resize_to_layout!(fig)
-end
+get_grid_col_aspect(grid) = get_grid_col_aspect(grid.n, grid.d)
+get_grid_col_aspect(dims, deltas) = (dims[1] * deltas[1]) / (dims[end] * deltas[end])
+
+get_grid_row_aspect(grid) = get_grid_row_aspect(grid.n, grid.d)
+get_grid_row_aspect(dims, deltas) = (dims[end] * deltas[end]) / (dims[1] * deltas[1])
 
 function get_coordinate_corners(; dims, deltas, origin)
     xs = range(0; length=dims[1] + 1, step=deltas[1]) .- origin[1]
@@ -82,6 +82,21 @@ function plot_heatmap_from_grid!(
     end
     xlims!(ax, -origin[1], dims[1] * deltas[1] - origin[1])
     ylims!(ax, dims[end] * deltas[end] - origin[end], -origin[end])
-    rescale_heatmap_to_grid!(ax.parent; dims, deltas, origin)
     return hm
+end
+
+function get_padding_layout(grid_position; left=5f0, top=5f0, right=5f0, bottom=5f0)
+    padding_layout = GridLayout(grid_position, 3, 3)
+    rowsize!(padding_layout, 1, Fixed(top))
+    rowsize!(padding_layout, 3, Fixed(bottom))
+    colsize!(padding_layout, 1, Fixed(left))
+    colsize!(padding_layout, 3, Fixed(right))
+    return GridLayout(padding_layout[2,2])
+end
+
+
+function add_box(grid_position; z=-100, kwargs...)
+    b = Box(grid_position; kwargs...)
+    Makie.translate!(b.blockscene, 0, 0, z)
+    return b
 end
