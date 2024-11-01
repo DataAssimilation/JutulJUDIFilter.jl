@@ -24,8 +24,8 @@ using Statistics
 using LinearAlgebra
 using YAML: YAML
 
-import ImageTransformations
-import JLD2
+using ImageTransformations: ImageTransformations
+using JLD2: JLD2
 
 include("jutul_model.jl")
 

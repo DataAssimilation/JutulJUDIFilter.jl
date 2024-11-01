@@ -142,9 +142,11 @@ function JutulModel6(; options, translator, kwargs=(;))
     wells = setup_well(domain, options.injection)
     if get_label(options.system) == :co2brine
         model = setup_reservoir_model(domain, options.system; wells, extra_out=false)
-        parameters = setup_parameters(model);
+        parameters = setup_parameters(model)
     else
-        model, parameters = setup_reservoir_model(domain, options.system; wells, extra_out=true)
+        model, parameters = setup_reservoir_model(
+            domain, options.system; wells, extra_out=true
+        )
     end
 
     nc = number_of_cells(mesh)
