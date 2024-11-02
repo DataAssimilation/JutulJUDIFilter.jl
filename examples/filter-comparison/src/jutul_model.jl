@@ -37,6 +37,10 @@ function JutulModelTranslator(K::Type)
     return JutulModelTranslator{K}()
 end
 
+
+function sim_to_member(::Val{:OverallMoleFraction}, state, domain_params)
+    return state[:Reservoir][:OverallMoleFractions][2, :]
+end
 function sim_to_member(::Val{:Saturation}, state, domain_params)
     return state[:Reservoir][:Saturations][2, :]
 end
@@ -62,6 +66,12 @@ function sim_to_member!(T::JutulModelTranslator{K}, member, state) where {K<:Tup
             k in fieldtypes(K) if !(k in JutulModelTranslatorDomainKeys)
         ),
     )
+end
+
+
+function member_to_sim!(::Val{:OverallMoleFraction}, member, state, domain_params)
+    state[:Reservoir][:OverallMoleFractions][2, :] .= member[:OverallMoleFraction]
+    return state[:Reservoir][:OverallMoleFractions][1, :] .= 1 .- member[:OverallMoleFraction]
 end
 
 function member_to_sim!(::Val{:Saturation}, member, state, domain_params)
@@ -266,10 +276,3 @@ function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where {K}
     sim_to_member!(M.translator, member, final_state)
     return member
 end
-
-# function sim_to_member(state, domain_params)
-#     return Dict(
-#         :Saturation => state[:Reservoir][:Saturations][2, :],
-#         :Pressure => state[:Reservoir][:Pressure],
-#     )
-# end

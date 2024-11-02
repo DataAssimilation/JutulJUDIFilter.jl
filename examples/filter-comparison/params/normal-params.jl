@@ -29,7 +29,8 @@ simple_system = CO2BrineSimpleOptions(;
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(325, 1, 341), d=(12.5, 1e2, 6.25)),
-    system=complex_system,
+    # system=complex_system,
+    system=simple_system,
     porosity=FieldOptions(0.25),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;

@@ -99,3 +99,236 @@ function add_box(grid_position; z=-100, kwargs...)
     Makie.translate!(b.blockscene, 0, 0, z)
     return b
 end
+
+
+function set_up_time_heatmap_controls(fig, content_size, observation_times, params; fig_scale)
+    previous_num_blocks = length(fig.content)
+
+    controls_height = 4 * fig_scale
+    resize!(fig, content_size[1], content_size[2] + controls_height)
+    controls_layout_size = (; width=Auto(), height=Fixed(controls_height))
+    controls_layout = GridLayout(fig[2, 1]; controls_layout_size...)
+    colsize!(controls_layout, 1, Relative(1))
+
+    controls_time_position = controls_layout[1, 1]
+    controls_time_layout = get_padding_layout(controls_time_position)
+    add_box(
+        controls_time_position;
+        cornerradius=10,
+        color=(:yellow, 0.1),
+        strokecolor=:transparent,
+    )
+
+    slider_grid = SliderGrid(
+        controls_time_layout[1, 1],
+        (
+            label="Time",
+            range=1:length(observation_times),
+            format=i -> "$(observation_times[i]/my_year) years",
+            startvalue=length(observation_times),
+        ),
+    )
+
+    controls_colormap_position = controls_layout[2, 1]
+    controls_colormap_layout = get_padding_layout(controls_colormap_position; top=0.0f0)
+    add_box(
+        controls_colormap_position;
+        cornerradius=10,
+        color=(:blue, 0.1),
+        strokecolor=:transparent,
+    )
+
+    Label(
+        controls_colormap_layout[1, 1], "Colorbar options"; halign=:center, valign=:center
+    )
+
+    colormap_selector = let layout = controls_colormap_layout[1, 2]
+        function colormap_validator(colormap)
+            return colormap == "" ||
+                   isnothing(colormap) ||
+                   colormap == "parula" ||
+                   colormap in Makie.all_gradient_names
+        end
+        colormap_selector = Textbox(
+            layout[1, 1];
+            placeholder="colormap",
+            validator=colormap_validator,
+            boxcolor=RGBf(0.94, 0.94, 0.94),
+            boxcolor_focused=RGBf(0.94, 0.94, 0.94),
+            boxcolor_focused_invalid=RGBf(0.94, 0.94, 0.94),
+            width=200,
+        )
+    end
+
+    colormap_reversor = let layout = controls_colormap_layout[1, 3]
+        Button(layout[1, 1]; label="Reverse colormap")
+    end
+
+    colorscale_options = [("linear", identity), ("log10", log10)]
+    colorscale_menu = let layout = controls_colormap_layout[1, 4]
+        Menu(layout[1, 1]; options=colorscale_options, default="linear")
+    end
+
+    colorrange_slider_layout = GridLayout(controls_colormap_layout[2, :])
+    colorscale = colorscale_menu.selection
+
+    function validator(s)
+        val = tryparse(Float64, s)
+        return !isnothing(val) && (colorscale[] != log10 || val > 0)
+    end
+    colorrange_min_selector = Textbox(
+        colorrange_slider_layout[1, 1];
+        stored_string="0",
+        validator=validator,
+        boxcolor=RGBf(0.94, 0.94, 0.94),
+        boxcolor_focused=RGBf(0.94, 0.94, 0.94),
+        boxcolor_focused_invalid=RGBf(0.94, 0.94, 0.94),
+        width=90,
+    )
+    colorrange_slider = IntervalSlider(
+        colorrange_slider_layout[1, 2];
+        range=LinRange(0, 1, 1000),
+        startvalues=(0.0, 1.0),
+        horizontal=true,
+    )
+    colorrange_max_selector = Textbox(
+        colorrange_slider_layout[1, 3];
+        stored_string="1",
+        validator=validator,
+        boxcolor=RGBf(0.94, 0.94, 0.94),
+        boxcolor_focused=RGBf(0.94, 0.94, 0.94),
+        boxcolor_focused_invalid=RGBf(0.94, 0.94, 0.94),
+        width=90,
+    )
+    colorrange_min_max = @lift begin
+        m1 = tryparse(Float64, $(colorrange_min_selector.stored_string))
+        m2 = tryparse(Float64, $(colorrange_max_selector.stored_string))
+        extrema((m1, m2))
+    end
+
+    controls_other_position = controls_layout[3, 1]
+    controls_other_layout = get_padding_layout(controls_other_position; top=0.0f0)
+    add_box(
+        controls_other_position;
+        cornerradius=10,
+        color=(:green, 0.1),
+        strokecolor=:transparent,
+    )
+
+    axis_reset = Button(controls_other_layout[:, 1]; label="Reset view")
+
+    interactive_savor = let layout = controls_other_layout[1, 2]
+        Label(layout[1, 1], "Save images after closing"; halign=:center, valign=:center)
+        Toggle(layout[1, 2]; active=false)
+    end
+
+    hide_controls = let layout = controls_other_layout[2, 2]
+        Label(layout[1, 1], "Hide controls (toggle with 'k')"; halign=:center, valign=:center)
+        Toggle(layout[1, 2]; active=false)
+    end
+
+    t_idx = slider_grid.sliders[1].value
+    colormap = Observable{Any}(parula)
+    on(colormap_selector.stored_string) do s
+        colormap[] = if s == "parula" || s == "" || isnothing(s)
+            parula
+        else
+            s
+        end
+    end
+    on(colormap_reversor.clicks) do _
+        if isa(colormap.val, Reverse)
+            colormap[] = colormap.val.data
+        else
+            colormap[] = Reverse(colormap.val)
+        end
+    end
+    interactive_blocks = copy(fig.content[(previous_num_blocks + 1):end])
+
+    notify(colorscale_menu.selection)
+
+    on(colorscale) do scale
+        if scale == log10
+            if colorrange_min_max[][1] <= 0
+                colorrange_min_selector.displayed_string[] = "1e-6"
+                colorrange_min_selector.stored_string[] = "1e-6"
+            end
+            if colorrange_min_max[][2] <= 0
+                colorrange_max_selector.displayed_string[] = "1e0"
+                colorrange_max_selector.stored_string[] = "1e0"
+            end
+        end
+    end
+
+    colorrange = @lift begin
+        interval = $(colorrange_slider.interval)
+        user_range = $colorrange_min_max
+        if $colorscale == log10
+            if interval[1] >= interval[2]
+                return user_range
+            end
+            # Map [0,1] to user_range logarithmically
+            maxrange = log10.(user_range)
+            return 1e1 .^ (maxrange[1] .+ (interval .* (maxrange[2] .- maxrange[1])))
+        else
+            if interval[1] >= interval[2]
+                return user_range
+            end
+            # Map interval from [0,1] to user_range.
+            return user_range[1] .+ interval .* (user_range[2] - user_range[1])
+        end
+    end
+    lowclip = Observable{Any}(nothing)
+    onany(colorrange, colormap) do colorrange, colormap
+        if colorrange[1] > 0
+            lowclip[] = resample_cmap(colormap, 2; alpha=0.3)[1]
+        else
+            lowclip[] = nothing
+        end
+    end
+    highclip = Observable{Any}(nothing)
+    onany(colorrange, colormap) do colorrange, colormap
+        if colorrange[2] < 1
+            highclip[] = resample_cmap(colormap, 2; alpha=0.3)[2]
+        else
+            highclip[] = nothing
+        end
+    end
+
+    on(events(fig.scene).keyboardbutton) do event
+        if event.action == Keyboard.press || event.action == Keyboard.repeat
+            if event.key == Keyboard.k
+                hide_controls.active[] = !hide_controls.active.val
+            end
+        end
+    end
+
+    on(hide_controls.active) do a
+        if a
+            foreach(b -> b.blockscene.visible[] = false, interactive_blocks)
+            content(fig[2, 1]).height[] = Fixed(0)
+            resize!(fig, content_size[1], content_size[2])
+        else
+            content(fig[2, 1]).height[] = controls_layout_size[2]
+            foreach(b -> b.blockscene.visible[] = true, interactive_blocks)
+            resize!(fig, content_size[1], content_size[2] + controls_height)
+        end
+    end
+
+    heatmap_kwargs = (;
+        colormap,
+        lowclip,
+        highclip,
+        colorscale,
+        colorrange,
+    )
+    p = (;
+        t_idx,
+        colorscale,
+        hide_controls,
+        interactive_savor,
+        axis_reset,
+        controls_height,
+    )
+    return p, heatmap_kwargs
+end
