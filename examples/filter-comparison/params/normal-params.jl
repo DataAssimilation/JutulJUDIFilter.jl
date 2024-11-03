@@ -13,8 +13,6 @@ injection_well_trajectory = (
     SVector(1875.0, 50.0, 1775.0 + 37.5),  # Second point
 )
 
-DType = Dict{String,Any}
-
 complex_system = CO2BrineOptions(; co2_physics=:immiscible, thermal=false)
 
 simple_system = CO2BrineSimpleOptions(;
@@ -29,8 +27,8 @@ simple_system = CO2BrineSimpleOptions(;
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(325, 1, 341), d=(12.5, 1e2, 6.25)),
-    # system=complex_system,
-    system=simple_system,
+    system=complex_system,
+    # system=simple_system,
     porosity=FieldOptions(0.25),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;

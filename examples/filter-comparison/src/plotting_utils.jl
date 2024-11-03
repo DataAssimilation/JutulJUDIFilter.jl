@@ -101,7 +101,7 @@ function add_box(grid_position; z=-100, kwargs...)
 end
 
 
-function set_up_time_heatmap_controls(fig, content_size, observation_times, params; fig_scale)
+function set_up_time_heatmap_controls(fig, content_size, observation_times, params; fig_scale, divergent=false, default_data_range, default_colormap)
     previous_num_blocks = length(fig.content)
 
     controls_height = 4 * fig_scale
@@ -139,7 +139,7 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
     )
 
     Label(
-        controls_colormap_layout[1, 1], "Colorbar options"; halign=:center, valign=:center
+        controls_colormap_layout[1, 1], "Colorbar"; halign=:center, valign=:center
     )
 
     colormap_selector = let layout = controls_colormap_layout[1, 2]
@@ -178,7 +178,7 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
     end
     colorrange_min_selector = Textbox(
         colorrange_slider_layout[1, 1];
-        stored_string="0",
+        stored_string=string(default_data_range[1]),
         validator=validator,
         boxcolor=RGBf(0.94, 0.94, 0.94),
         boxcolor_focused=RGBf(0.94, 0.94, 0.94),
@@ -193,7 +193,7 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
     )
     colorrange_max_selector = Textbox(
         colorrange_slider_layout[1, 3];
-        stored_string="1",
+        stored_string=string(default_data_range[2]),
         validator=validator,
         boxcolor=RGBf(0.94, 0.94, 0.94),
         boxcolor_focused=RGBf(0.94, 0.94, 0.94),
@@ -204,6 +204,56 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
         m1 = tryparse(Float64, $(colorrange_min_selector.stored_string))
         m2 = tryparse(Float64, $(colorrange_max_selector.stored_string))
         extrema((m1, m2))
+    end
+
+    if divergent
+        on(colorrange_min_selector.stored_string) do s
+            max_s_target = string(-parse(Float64, s))
+            max_s = colorrange_max_selector.stored_string[]
+            if max_s != max_s_target
+                colorrange_max_selector.stored_string[] = max_s_target
+                colorrange_max_selector.displayed_string[] = max_s_target
+            end
+        end
+        on(colorrange_max_selector.stored_string) do s
+            min_s_target = string(-parse(Float64, s))
+            min_s = colorrange_min_selector.stored_string[]
+            if min_s != min_s_target
+                colorrange_min_selector.stored_string[] = min_s_target
+                colorrange_min_selector.displayed_string[] = min_s_target
+            end
+        end
+        let 
+            previous_indices = collect(colorrange_slider.selected_indices[])
+            function update_idx(indices; previous_indices=previous_indices)
+                d = previous_indices[1] == indices[1]
+                N = length(colorrange_slider.range[])
+                if d
+                    # Second index was dragged, so update first index accordingly
+                    i_ctrl = indices[2]
+                    if i_ctrl <= N / 2
+                        i_ctrl = ceil(Int, N/2)
+                    end
+                    # Map [1, N] to [-(N-1)/2, (N-1)/2], then negate and map back to [1, N].
+                    i_target = N + 1 - i_ctrl
+                    new_indices = (i_target, i_ctrl)
+                else
+                    # First index was dragged, so update second index accordingly
+                    i_ctrl = indices[1]
+                    if i_ctrl >= N / 2
+                        i_ctrl = floor(Int, N/2)
+                    end
+                    # Map [1, N] to [-(N-1)/2, (N-1)/2], then negate and map back to [1, N].
+                    i_target = N + 1 - i_ctrl
+                    new_indices = (i_ctrl, i_target)
+                end
+                previous_indices .= new_indices
+                if indices != new_indices
+                    colorrange_slider.selected_indices[] = new_indices
+                end
+            end
+            on(update_idx, colorrange_slider.selected_indices)
+        end
     end
 
     controls_other_position = controls_layout[3, 1]
@@ -228,7 +278,7 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
     end
 
     t_idx = slider_grid.sliders[1].value
-    colormap = Observable{Any}(parula)
+    colormap = Observable{Any}(default_colormap)
     on(colormap_selector.stored_string) do s
         colormap[] = if s == "parula" || s == "" || isnothing(s)
             parula
@@ -280,7 +330,7 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
     end
     lowclip = Observable{Any}(nothing)
     onany(colorrange, colormap) do colorrange, colormap
-        if colorrange[1] > 0
+        if colorrange[1] > default_data_range[1]
             lowclip[] = resample_cmap(colormap, 2; alpha=0.3)[1]
         else
             lowclip[] = nothing
@@ -288,7 +338,7 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
     end
     highclip = Observable{Any}(nothing)
     onany(colorrange, colormap) do colorrange, colormap
-        if colorrange[2] < 1
+        if colorrange[2] < default_data_range[2]
             highclip[] = resample_cmap(colormap, 2; alpha=0.3)[2]
         else
             highclip[] = nothing
@@ -331,4 +381,18 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
         controls_height,
     )
     return p, heatmap_kwargs
+end
+
+function show_interactive_preview(fig, controls)
+    # Show interactively.
+    if isinteractive()
+        screen = display(fig)
+        if hasmethod(wait, Tuple{typeof(screen)})
+            wait(screen)
+        else
+            println("Press enter to continue. Type c to skip saving plots.")
+            r = readline(stdin)
+            controls.interactive_savor.active[] = (strip(r) == "c")
+        end
+    end
 end
