@@ -6,14 +6,15 @@ using ConfigurationsJutulDarcy: SVector
 using JutulDarcy.Jutul
 using Ensembles
 
+using DrWatson: srcdir
+include(srcdir("options.jl"))
+
 Darcy, bar, kg, meter, day, yr = si_units(:darcy, :bar, :kilogram, :meter, :day, :year)
 injection_well_trajectory = (
     SVector(64.50, 0.5, 25.0),  # First point
     SVector(66.00, 0.5, 35.0),  # Second point
     SVector(71.00, 0.5, 40.0),  # Third point
 )
-
-DType = Dict{String,Any}
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(10, 1, 50), d=(1e1, 1e0, 1e0)),
@@ -44,45 +45,29 @@ params_transition = JutulOptions(;
     ),
 )
 
-@option struct NoisyObservationOptions
-    noise_scale = 2
-    timestep_size = 0.1
-    num_timesteps = 600
-    seed = 0
-    only_noisy = false
-end
-
-@option struct ModelOptions
-    version = "v0.2"
-    transition::JutulOptions
-    observation::NoisyObservationOptions
-end
-
-@option struct JutulJUDIFilterOptions
-    version = "v0.3"
-    ground_truth::ModelOptions
-end
-
-function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
-    noise_scale = params.noise_scale
-    seed = params.seed
-    rng = Random.MersenneTwister(seed)
-    if seed == 0
-        seed = Random.rand(UInt64)
-    end
-    Random.seed!(rng, seed)
-    state_keys = get_state_keys(op)
-    if !params.only_noisy
-        state_keys = append!(
-            [Symbol(key, :_noisy) for key in get_state_keys(op)], state_keys
-        )
-    end
-
-    return NoisyObserver(op, state_keys, noise_scale, rng, seed, params.only_noisy)
-end
+ground_truth=ModelOptions(;
+    transition=params_transition,
+    observation=NoisyObservationOptions(; timestep_size=1e-2yr, num_timesteps=5)
+)
 
 params = JutulJUDIFilterOptions(;
-    ground_truth=ModelOptions(;
-        transition=params_transition, observation=NoisyObservationOptions(; timestep_size=1e-2yr, num_timesteps=5)
+    ground_truth,
+    ensemble=EnsembleOptions(;
+        size = 10,
+        seed = 9347215,
+        mesh = params_transition.mesh,
+        permeability_v_over_h=0.36,
+        prior = (;
+            Saturation = GaussianPriorOptions(; mean=0, std=0),
+        )
+    ),
+    estimator=EstimatorOptions(;
+        transition=ground_truth.transition,
+        observation=ground_truth.observation,
+        algorithm=EnKFOptions(;
+            noise=NoiseOptions(; std=1, type=:diagonal),
+            include_noise_in_obs_covariance=false,
+            rho = 0,
+        ),
     ),
 )
