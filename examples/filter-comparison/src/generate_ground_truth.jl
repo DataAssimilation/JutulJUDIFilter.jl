@@ -32,6 +32,7 @@ include("options.jl")
 
 # Generate synthetic ground-truth observations.
 function generate_ground_truth(params)
+    # K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
     K = (Val(:Saturation), Val(:Pressure))
     # K = (Val(:OverallMoleFraction), Val(:Pressure))
     state_keys = (:Saturation, :Pressure)
@@ -59,7 +60,7 @@ function generate_ground_truth(params)
 
     ground_truth = @time let
         state = Dict{Symbol,Any}()
-        sim_to_member!(JMT, state, M.state0, M.domain)
+        initialize_member!(M, state)
 
         ## Set seed for ground-truth simulation.
         Random.seed!(0xfee55e45)

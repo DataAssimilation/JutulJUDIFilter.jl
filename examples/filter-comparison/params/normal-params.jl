@@ -33,6 +33,7 @@ params_transition = JutulOptions(;
     # system=complex_system,
     system=simple_system,
     porosity=FieldOptions(0.25),
+    # permeability=FieldOptions(0.1Darcy),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;
             file="compass/broad&narrow_perm_models_new.jld2",
@@ -93,10 +94,11 @@ params = JutulJUDIFilterOptions(;
     estimator=EstimatorOptions(;
         transition=ground_truth.transition,
         observation=ground_truth.observation,
-        algorithm=EnKFOptions(;
-            noise=NoiseOptions(; std=1, type=:diagonal),
-            include_noise_in_obs_covariance=false,
-            rho = 0,
-        ),
+        algorithm=nothing,
+        # algorithm=EnKFOptions(;
+        #     noise=NoiseOptions(; std=1, type=:diagonal),
+        #     include_noise_in_obs_covariance=false,
+        #     rho = 0,
+        # ),
     ),
 )

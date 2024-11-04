@@ -48,3 +48,5 @@ function get_estimator(params_estimator::EnKFOptions, n)
     )
     return estimator
 end
+
+get_estimator(params_estimator::Nothing, n) = nothing

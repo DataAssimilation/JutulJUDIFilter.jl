@@ -46,61 +46,74 @@ function sim_to_member(::Val{:Saturation}, state, domain_params)
 end
 sim_to_member(::Val{:Pressure}, state, domain_params) = state[:Reservoir][:Pressure]
 
+sim_to_member(::Val{:Permeability}, state, domain_params) = domain_params[:permeability]
+
 function sim_to_member!(
     T::JutulModelTranslator{K}, member, state, domain_params
 ) where {K<:Tuple}
-    return merge!(
-        member,
-        Dict(
-            k.parameters[1] => sim_to_member(k(), state, domain_params) for
-            k in fieldtypes(K)
-        ),
-    )
+    for k in fieldtypes(K)
+        d = sim_to_member(k(), state, domain_params)
+        if haskey(member, k)
+            member[k.parameters[1]][:] .= d[:]
+        else
+            member[k.parameters[1]] = deepcopy(d)
+        end
+    end
+    return member
 end
 
 function sim_to_member!(T::JutulModelTranslator{K}, member, state) where {K<:Tuple}
-    return merge!(
-        member,
-        Dict(
-            k.parameters[1] => sim_to_member(k(), state, nothing) for
-            k in fieldtypes(K) if !(k in JutulModelTranslatorDomainKeys)
-        ),
-    )
-end
-
-
-function member_to_sim!(::Val{:OverallMoleFraction}, member, state, domain_params)
-    state[:Reservoir][:OverallMoleFractions][2, :] .= reshape(member[:OverallMoleFraction], :)
-    return state[:Reservoir][:OverallMoleFractions][1, :] .= 1 .- reshape(member[:OverallMoleFraction], :)
-end
-
-function member_to_sim!(::Val{:Saturation}, member, state, domain_params)
-    state[:Reservoir][:Saturations][2, :] .= reshape(member[:Saturation], :)
-    return state[:Reservoir][:Saturations][1, :] .= 1 .- reshape(member[:Saturation], :)
-end
-
-function member_to_sim!(::Val{:Pressure}, member, state, domain_params)
-    return state[:Reservoir][:Pressure] .= reshape(member[:Pressure], :)
-end
-
-function member_to_sim!(::Val{:Permeability}, member, state, domain_params)
-    return domain_params[:permeability] .= reshape(member[:Permeability], :)
-end
-
-function member_to_sim!(
-    T::JutulModelTranslator{K}, member, state, domain_params
-) where {K<:Tuple}
-    for k in fieldtypes(K)
-        member_to_sim!(k(), member, state, domain_params)
-    end
-end
-
-function member_to_sim!(T::JutulModelTranslator{K}, member, state) where {K<:Tuple}
     for k in fieldtypes(K)
         if k in JutulModelTranslatorDomainKeys
             continue
         end
-        member_to_sim!(k(), member, state, nothing)
+        d = sim_to_member(k(), state, nothing)
+        if haskey(member, k)
+            member[k.parameters[1]][:] .= d[:]
+        else
+            member[k.parameters[1]] = deepcopy(d)
+        end
+    end
+    return member
+end
+
+
+function member_to_sim!(M, ::Val{:OverallMoleFraction}, member, state, domain_params)
+    state[:Reservoir][:OverallMoleFractions][2, :] .= reshape(member[:OverallMoleFraction], :)
+    return state[:Reservoir][:OverallMoleFractions][1, :] .= 1 .- reshape(member[:OverallMoleFraction], :)
+end
+
+function member_to_sim!(M, ::Val{:Saturation}, member, state, domain_params)
+    state[:Reservoir][:Saturations][2, :] .= reshape(member[:Saturation], :)
+    return state[:Reservoir][:Saturations][1, :] .= 1 .- reshape(member[:Saturation], :)
+end
+
+function member_to_sim!(M, ::Val{:Pressure}, member, state, domain_params)
+    return state[:Reservoir][:Pressure][:] .= reshape(member[:Pressure], :)
+end
+
+function member_to_sim!(M, ::Val{:Permeability}, member, state, domain_params)
+    perm = member[:Permeability]
+    if length(perm) < length(domain_params[:permeability])
+        perm = Kto3(member[:Permeability]; kvoverkh=M.options.permeability_v_over_h)
+    end
+    return domain_params[:permeability][:] .= reshape(perm, :)
+end
+
+function member_to_sim!(M, 
+    T::JutulModelTranslator{K}, member, state, domain_params
+) where {K<:Tuple}
+    for k in fieldtypes(K)
+        member_to_sim!(M, k(), member, state, domain_params)
+    end
+end
+
+function member_to_sim!(M, T::JutulModelTranslator{K}, member, state) where {K<:Tuple}
+    for k in fieldtypes(K)
+        if k in JutulModelTranslatorDomainKeys
+            continue
+        end
+        member_to_sim!(M, k(), member, state, nothing)
     end
 end
 
@@ -213,9 +226,9 @@ function JutulModel6(; options, translator, kwargs=(;))
                 push!(K, Symbol(model_key, :_, var_key))
             end
             k = K[end]
-            if length(methods(member_to_sim!, (Val{k}, Any, Any, Any))) == 0
+            if length(methods(member_to_sim!, (Any, Val{k}, Any, Any, Any))) == 0
                 println(quote
-                    function member_to_sim!(::Val{$(Meta.quot(k))}, member, state, domain_params)
+                    function member_to_sim!(M, ::Val{$(Meta.quot(k))}, member, state, domain_params)
                         state[$(Meta.quot(model_key))][$(Meta.quot(var_key))] .= member[$(Meta.quot(k))]
                     end
                 end)
@@ -229,7 +242,9 @@ function JutulModel6(; options, translator, kwargs=(;))
             end
         end
     end
-    translator = JutulModelTranslator(tuple(Val.(K)...))
+    K = vcat(Val.(K), collect(p() for p in typeof(translator).parameters[1].parameters))
+    unique!(K)
+    translator = JutulModelTranslator(tuple(K...))
 
     return JutulModel(
         translator,
@@ -281,7 +296,7 @@ end
 #     model = M.model
 #     forces = M.forces
 
-#     member_to_sim!(JMT, member, M.state0, M.domain)
+#     member_to_sim!(M, JMT, member, M.state0, M.domain)
 #     if modifies_domain(JMT)
 #         parameters = setup_parameters(model)
 #     end
@@ -302,8 +317,9 @@ function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where {K}
     forces = M.forces
     dt = Float64[t - t0]
 
-    member_to_sim!(M.translator, member, M.state0, M.domain)
+    member_to_sim!(M, M.translator, member, M.state0, M.domain)
     if modifies_domain(M.translator)
+        println("MODIFIED domain")
         parameters = setup_parameters(model)
     end
     result = simulate_reservoir(state0, model, dt; parameters, forces, M.kwargs...)
@@ -312,7 +328,7 @@ function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where {K}
     return member
 end
 
-function member_to_sim!(::Val{:Injector_Pressure}, member, state, domain_params)
+function member_to_sim!(M, ::Val{:Injector_Pressure}, member, state, domain_params)
     (state[:Injector])[:Pressure] .= member[:Injector_Pressure]
 end
 
@@ -320,7 +336,7 @@ function sim_to_member(::Val{:Injector_Pressure}, state, domain_params)
     (state[:Injector])[:Pressure]
 end
 
-function member_to_sim!(::Val{:Injector_Saturations}, member, state, domain_params)
+function member_to_sim!(M, ::Val{:Injector_Saturations}, member, state, domain_params)
     (state[:Injector])[:Saturations] .= member[:Injector_Saturations]
 end
 
@@ -328,7 +344,7 @@ function sim_to_member(::Val{:Injector_Saturations}, state, domain_params)
     (state[:Injector])[:Saturations]
 end
 
-function member_to_sim!(::Val{:Facility_TotalSurfaceMassRate}, member, state, domain_params)
+function member_to_sim!(M, ::Val{:Facility_TotalSurfaceMassRate}, member, state, domain_params)
     (state[:Facility])[:TotalSurfaceMassRate] .= member[:Facility_TotalSurfaceMassRate]
 end
 
@@ -336,3 +352,14 @@ function sim_to_member(::Val{:Facility_TotalSurfaceMassRate}, state, domain_para
     (state[:Facility])[:TotalSurfaceMassRate]
 end
 
+
+function initialize_member!(M::JutulModel, member)
+    state = deepcopy(M.state0)
+    for k in keys(member)
+        # if Val{k} in JutulModelTranslatorDomainKeys
+        #     continue
+        # end
+        member_to_sim!(M, Val(k), member, state, M.domain)
+    end
+    sim_to_member!(M.translator, member, state, M.domain)
+end

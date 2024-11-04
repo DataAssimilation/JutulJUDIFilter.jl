@@ -40,7 +40,14 @@ function plot_data(content_layout, state, params, ::Val{:Pressure}; kwargs...)
 end
 
 function plot_data(content_layout, state, params, ::Val{:Permeability}; kwargs...)
-    data = @lift($state[:Permeability][1, :])
+    data = @lift begin
+        s = size($state[:Permeability])
+        if s[1] == 3 && length(s) > 1
+            $state[:Permeability][1, :]
+        else
+            $state[:Permeability]
+        end
+    end
     plot_scalar_field(content_layout, data, params; kwargs...)
 end
 
@@ -233,29 +240,33 @@ function plot_states(observation_times, states, params; save_dir_root, try_inter
 
     if haskey(states[1], :Permeability)
         default_data_range = extrema(Iterators.flatten(extrema.(s[:Permeability] for s in states)))
-        fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(observation_times, states, params; default_data_range)
+        if default_data_range[1] == default_data_range[2]
+            println("permeability is constant at ", states[1][:Permeability][1])
+        else
+            fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(observation_times, states, params; default_data_range)
 
-        add_top_label(content_layout, controls.t_idx)
-        state = @lift(states[$(controls.t_idx)])
-        ax = plot_data(content_layout, state, params, :Permeability; grid_2d, heatmap_kwargs)
+            add_top_label(content_layout, controls.t_idx)
+            state = @lift(states[$(controls.t_idx)])
+            ax = plot_data(content_layout, state, params, :Permeability; grid_2d, heatmap_kwargs)
 
-        cb = content(fig[1,1][1,2])
-        cb.label = "SI permeability"
+            cb = content(fig[1,1][1,2])
+            cb.label = "SI permeability"
 
-        controls.interactive_savor.active[] = true
-        try_interactive && show_interactive_preview(fig, controls)
-        controls.hide_controls.active[] = true
+            controls.interactive_savor.active[] = true
+            try_interactive && show_interactive_preview(fig, controls)
+            controls.hide_controls.active[] = true
 
-        if controls.interactive_savor.active[]
-            @info "Plotting permeability data to $save_dir_root"
-            @withprogress name = "permeability" begin
-                save_dir = joinpath(save_dir_root, "permeability")
-                mkpath(save_dir)
-                for i in 1:length(states)
-                    controls.t_idx[] = i
-                    file_path = joinpath(save_dir, "$(cfmt("%02d", i)).png")
-                    wsave(file_path, fig)
-                    @logprogress i / length(states)
+            if controls.interactive_savor.active[]
+                @info "Plotting permeability data to $save_dir_root"
+                @withprogress name = "permeability" begin
+                    save_dir = joinpath(save_dir_root, "permeability")
+                    mkpath(save_dir)
+                    for i in 1:length(states)
+                        controls.t_idx[] = i
+                        file_path = joinpath(save_dir, "$(cfmt("%02d", i)).png")
+                        wsave(file_path, fig)
+                        @logprogress i / length(states)
+                    end
                 end
             end
         end

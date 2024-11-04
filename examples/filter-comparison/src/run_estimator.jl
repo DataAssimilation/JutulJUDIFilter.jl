@@ -51,7 +51,7 @@ function run_estimator(params)
     ensemble = data_initial["ensemble"]
 
 
-    K = (Val(:Saturation), Val(:Pressure))
+    K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
     state_keys = (:Saturation, :Pressure)
     JMT = JutulModelTranslator(K)
 
@@ -60,19 +60,13 @@ function run_estimator(params)
         options; time=(TimeDependentOptions(options.time[1]; years=1.0, steps=1),)
     )
     M = JutulModel(; translator=JMT, options)
-    M = JutulModel(; translator=JMT, options)
     observer = NoisyObserver(collect(state_keys); params=params_estimator.observation)
 
     # Initialize member for all primary variables in simulation.
     @progress "Initialize ensemble states" for member in get_ensemble_members(ensemble)
-        state = deepcopy(M.state0)
-        for k in keys(member)
-            if Val{k} in JutulModelTranslatorDomainKeys
-                continue
-            end
-            member_to_sim!(Val(k), member, state, nothing)
-        end            
-        sim_to_member!(M.translator, member, state)
+        a = mean(member[:Saturation])
+        initialize_member!(M, member)
+        println("prior_mean: $(a), post_mean: $(mean(member[:Saturation]))")
     end
 
     Random.seed!(0x02cc4823)

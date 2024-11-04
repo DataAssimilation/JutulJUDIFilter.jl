@@ -17,7 +17,7 @@ include(srcdir("plotting_plumes.jl"))
 
 # Read data.
 params = include(params_file)
-data_gt, _, filestem_gt = produce_or_load_ground_truth(params; loadfile=true, force=false)
+data_gt, _, filestem_gt = produce_or_load_ground_truth(params; loadfile=true, force=true)
 
 states = data_gt["states"]
 observations = data_gt["observations"]
