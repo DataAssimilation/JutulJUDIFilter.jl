@@ -119,12 +119,19 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
         strokecolor=:transparent,
     )
 
+    if eltype(observation_times) == Int
+        label = "Index"
+        format = i -> "$i"
+    else
+        label = "Time"
+        format = i -> "$(observation_times[i]/my_year) years"
+    end
     slider_grid = SliderGrid(
         controls_time_layout[1, 1],
         (
-            label="Time",
+            label,
             range=1:length(observation_times),
-            format=i -> "$(observation_times[i]/my_year) years",
+            format,
             startvalue=length(observation_times),
         ),
     )
@@ -265,8 +272,6 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
         strokecolor=:transparent,
     )
 
-    axis_reset = Button(controls_other_layout[:, 1]; label="Reset view")
-
     interactive_savor = let layout = controls_other_layout[1, 2]
         Label(layout[1, 1], "Save images after closing"; halign=:center, valign=:center)
         Toggle(layout[1, 2]; active=false)
@@ -377,7 +382,6 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
         colorscale,
         hide_controls,
         interactive_savor,
-        axis_reset,
         controls_height,
     )
     return p, heatmap_kwargs
@@ -388,6 +392,12 @@ function show_interactive_preview(fig, controls)
     if isinteractive()
         screen = display(fig)
         if hasmethod(wait, Tuple{typeof(screen)})
+            glfw_screen = GLMakie.to_native(screen)
+            on(events(fig.scene).keyboardbutton) do _
+                if ispressed(fig.scene, Keyboard.escape)
+                    GLMakie.GLFW.SetWindowShouldClose(glfw_screen, true)
+                end
+            end
             wait(screen)
         else
             println("Press enter to continue. Type c to skip saving plots.")

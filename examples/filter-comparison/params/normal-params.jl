@@ -5,6 +5,9 @@ using ConfigurationsJutulDarcy: @option
 using ConfigurationsJutulDarcy: SVector
 using JutulDarcy.Jutul
 
+using DrWatson
+include(srcdir("options.jl"))
+
 Darcy, bar, kg, meter, day, yr = si_units(:darcy, :bar, :kilogram, :meter, :day, :year)
 mD_to_meters2 = 1e-3 * Darcy
 
@@ -27,8 +30,8 @@ simple_system = CO2BrineSimpleOptions(;
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(325, 1, 341), d=(12.5, 1e2, 6.25)),
-    system=complex_system,
-    # system=simple_system,
+    # system=complex_system,
+    system=simple_system,
     porosity=FieldOptions(0.25),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;
@@ -63,45 +66,37 @@ params_transition = JutulOptions(;
     ),
 )
 
-@option struct NoisyObservationOptions
-    noise_scale = 2
-    timestep_size = 1yr
-    num_timesteps = 6
-    seed = 0
-    only_noisy = false
-end
-
-@option struct ModelOptions
-    version = "v0.2"
-    transition::JutulOptions
-    observation::NoisyObservationOptions
-end
-
-@option struct JutulJUDIFilterOptions
-    version = "v0.3"
-    ground_truth::ModelOptions
-end
-
-function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
-    noise_scale = params.noise_scale
-    seed = params.seed
-    rng = Random.MersenneTwister(seed)
-    if seed == 0
-        seed = Random.rand(UInt64)
-    end
-    Random.seed!(rng, seed)
-    state_keys = get_state_keys(op)
-    if !params.only_noisy
-        state_keys = append!(
-            [Symbol(key, :_noisy) for key in get_state_keys(op)], state_keys
-        )
-    end
-
-    return NoisyObserver(op, state_keys, noise_scale, rng, seed, params.only_noisy)
-end
+ground_truth = ModelOptions(;
+    transition=params_transition,
+    observation=NoisyObservationOptions(; timestep_size=1yr, num_timesteps=5)
+)
 
 params = JutulJUDIFilterOptions(;
-    ground_truth=ModelOptions(;
-        transition=params_transition, observation=NoisyObservationOptions(; num_timesteps=5)
+    ground_truth,
+    ensemble=EnsembleOptions(;
+        size = 10,
+        seed = 9347215,
+        mesh = params_transition.mesh,
+        permeability_v_over_h=0.36,
+        prior = (;
+            Saturation = GaussianPriorOptions(; mean=0, std=0),
+            Permeability = FieldOptions(;
+                suboptions=FieldFileOptions(;
+                    file="compass/broad&narrow_perm_models_new.jld2",
+                    key="BroadK",
+                    scale=mD_to_meters2,
+                    resize=true,
+                ),
+            ),
+        )
+    ),
+    estimator=EstimatorOptions(;
+        transition=ground_truth.transition,
+        observation=ground_truth.observation,
+        algorithm=EnKFOptions(;
+            noise=NoiseOptions(; std=1, type=:diagonal),
+            include_noise_in_obs_covariance=false,
+            rho = 0,
+        ),
     ),
 )

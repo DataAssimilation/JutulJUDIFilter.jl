@@ -70,21 +70,21 @@ end
 
 
 function member_to_sim!(::Val{:OverallMoleFraction}, member, state, domain_params)
-    state[:Reservoir][:OverallMoleFractions][2, :] .= member[:OverallMoleFraction]
-    return state[:Reservoir][:OverallMoleFractions][1, :] .= 1 .- member[:OverallMoleFraction]
+    state[:Reservoir][:OverallMoleFractions][2, :] .= reshape(member[:OverallMoleFraction], :)
+    return state[:Reservoir][:OverallMoleFractions][1, :] .= 1 .- reshape(member[:OverallMoleFraction], :)
 end
 
 function member_to_sim!(::Val{:Saturation}, member, state, domain_params)
-    state[:Reservoir][:Saturations][2, :] .= member[:Saturation]
-    return state[:Reservoir][:Saturations][1, :] .= 1 .- member[:Saturation]
+    state[:Reservoir][:Saturations][2, :] .= reshape(member[:Saturation], :)
+    return state[:Reservoir][:Saturations][1, :] .= 1 .- reshape(member[:Saturation], :)
 end
 
 function member_to_sim!(::Val{:Pressure}, member, state, domain_params)
-    return state[:Reservoir][:Pressure] .= member[:Pressure]
+    return state[:Reservoir][:Pressure] .= reshape(member[:Pressure], :)
 end
 
 function member_to_sim!(::Val{:Permeability}, member, state, domain_params)
-    return domain_params[:permeability] .= member[:Permeability]
+    return domain_params[:permeability] .= reshape(member[:Permeability], :)
 end
 
 function member_to_sim!(
@@ -197,6 +197,40 @@ function JutulModel6(; options, translator, kwargs=(;))
     dt, forces = setup_reservoir_forces(model, options.time; bc)
     dt = dt[1:1]
     forces = forces[1:1]
+
+    # Create a new translator from the primary vars.
+    K = []
+    for model_key in keys(model.models)
+        vars = Jutul.get_primary_variables(model.models[model_key])
+        for var_key in keys(vars)
+            if model_key == :Reservoir
+                if string(var_key)[end] == 's'
+                    push!(K, Symbol(string(var_key)[1:end-1]))
+                else
+                    push!(K, var_key)
+                end
+            else
+                push!(K, Symbol(model_key, :_, var_key))
+            end
+            k = K[end]
+            if length(methods(member_to_sim!, (Val{k}, Any, Any, Any))) == 0
+                println(quote
+                    function member_to_sim!(::Val{$(Meta.quot(k))}, member, state, domain_params)
+                        state[$(Meta.quot(model_key))][$(Meta.quot(var_key))] .= member[$(Meta.quot(k))]
+                    end
+                end)
+            end
+            if length(methods(sim_to_member, (Val{k}, Any, Any))) == 0
+                println(quote
+                    function sim_to_member(::Val{$(Meta.quot(k))}, state, domain_params)
+                        state[$(Meta.quot(model_key))][$(Meta.quot(var_key))]
+                    end
+                end)
+            end
+        end
+    end
+    translator = JutulModelTranslator(tuple(Val.(K)...))
+
     return JutulModel(
         translator,
         options,
@@ -212,6 +246,7 @@ function JutulModel6(; options, translator, kwargs=(;))
         parameters,
     )
 end
+
 
 # function (M::JutulModel)(member::Dict)
 #     state0 = get_state0(member)
@@ -276,3 +311,28 @@ function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where {K}
     sim_to_member!(M.translator, member, final_state)
     return member
 end
+
+function member_to_sim!(::Val{:Injector_Pressure}, member, state, domain_params)
+    (state[:Injector])[:Pressure] .= member[:Injector_Pressure]
+end
+
+function sim_to_member(::Val{:Injector_Pressure}, state, domain_params)
+    (state[:Injector])[:Pressure]
+end
+
+function member_to_sim!(::Val{:Injector_Saturations}, member, state, domain_params)
+    (state[:Injector])[:Saturations] .= member[:Injector_Saturations]
+end
+
+function sim_to_member(::Val{:Injector_Saturations}, state, domain_params)
+    (state[:Injector])[:Saturations]
+end
+
+function member_to_sim!(::Val{:Facility_TotalSurfaceMassRate}, member, state, domain_params)
+    (state[:Facility])[:TotalSurfaceMassRate] .= member[:Facility_TotalSurfaceMassRate]
+end
+
+function sim_to_member(::Val{:Facility_TotalSurfaceMassRate}, state, domain_params)
+    (state[:Facility])[:TotalSurfaceMassRate]
+end
+

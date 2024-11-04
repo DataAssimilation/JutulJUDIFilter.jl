@@ -28,8 +28,7 @@ using ImageTransformations: ImageTransformations
 using JLD2: JLD2
 
 include("jutul_model.jl")
-
-include("../params/small-params.jl")
+include("options.jl")
 
 # Generate synthetic ground-truth observations.
 function generate_ground_truth(params)
@@ -52,7 +51,6 @@ function generate_ground_truth(params)
     end
 
     ## Make operators.
-    # transitioner = JutulModel(; params)
     observer = NoisyObserver(state_keys; params=params.observation)
 
     ## Set seed for ground-truth simulation.
