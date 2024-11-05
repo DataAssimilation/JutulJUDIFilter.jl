@@ -101,7 +101,7 @@ function add_box(grid_position; z=-100, kwargs...)
 end
 
 
-function set_up_time_heatmap_controls(fig, content_size, observation_times, params; fig_scale, divergent=false, default_data_range, default_colormap)
+function set_up_time_heatmap_controls(fig, content_size, state_times, params; fig_scale, divergent=false, default_data_range, default_colormap)
     previous_num_blocks = length(fig.content)
 
     controls_height = 4 * fig_scale
@@ -119,20 +119,20 @@ function set_up_time_heatmap_controls(fig, content_size, observation_times, para
         strokecolor=:transparent,
     )
 
-    if eltype(observation_times) == Int
+    if eltype(state_times) == Int
         label = "Index"
         format = i -> "$i"
     else
         label = "Time"
-        format = i -> "$(observation_times[i]/my_year) years"
+        format = i -> "$(state_times[i]/my_year) years"
     end
     slider_grid = SliderGrid(
         controls_time_layout[1, 1],
         (
             label,
-            range=1:length(observation_times),
+            range=1:length(state_times),
             format,
-            startvalue=length(observation_times),
+            startvalue=length(state_times),
         ),
     )
 

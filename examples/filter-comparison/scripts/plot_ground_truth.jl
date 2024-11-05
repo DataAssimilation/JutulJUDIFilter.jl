@@ -21,12 +21,12 @@ data_gt, _, filestem_gt = produce_or_load_ground_truth(params; loadfile=true, fo
 
 states = data_gt["states"]
 observations = data_gt["observations"]
-observation_times = data_gt["observation_times"]
+state_times = data_gt["state_times"]
 save_dir_root = plotsdir("ground_truth", "states", filestem_gt)
 
 with_theme(theme_latexfonts()) do
     update_theme!(; fontsize=30)
-    plot_states(observation_times, states, params.ground_truth; save_dir_root)
+    plot_states(state_times, states, params.ground_truth; save_dir_root)
 end
 
 nothing

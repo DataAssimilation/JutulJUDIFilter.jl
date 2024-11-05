@@ -30,17 +30,17 @@ function Ensembles.assimilate_data(
     return posterior
 end
 
-function get_noise_covariance(params::NoiseOptions, n)
+function get_noise_covariance(params::NoiseOptions)
     type = params.type
     if type == :diagonal
-        R = Diagonal(fill(Float64(params.std)^2, n))
+        R = Float64(params.std)^2
         return R
     end
     throw(ArgumentError("Unknown noise type: $type"))
 end
 
-function get_estimator(params_estimator::EnKFOptions, n)
-    R = get_noise_covariance(params_estimator.noise, n)
+function get_estimator(params_estimator::EnKFOptions)
+    R = get_noise_covariance(params_estimator.noise)
     estimator = EnKF(
         R,
         params_estimator.include_noise_in_obs_covariance,

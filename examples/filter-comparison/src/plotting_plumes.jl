@@ -87,7 +87,7 @@ function plot_scalar_field(content_layout, data, params; grid_2d, heatmap_kwargs
     return ax
 end
 
-function make_time_domain_figure_with_controls(observation_times, states, params; default_data_range=(0,1), default_colormap=parula, divergent=false)
+function make_time_domain_figure_with_controls(state_times, states, params; default_data_range=(0,1), default_colormap=parula, divergent=false)
     # Set up the figure with controls.
     fig_scale = 96
     heatmap_aspect = get_grid_col_aspect(params.transition.mesh)
@@ -97,7 +97,7 @@ function make_time_domain_figure_with_controls(observation_times, states, params
     content_grid_position = fig[1, 1]
     content_layout = GridLayout(content_grid_position)
 
-    ctrls, heatmap_kwargs = set_up_time_heatmap_controls(fig, content_size, observation_times, params; fig_scale, default_data_range, default_colormap, divergent)
+    ctrls, heatmap_kwargs = set_up_time_heatmap_controls(fig, content_size, state_times, params; fig_scale, default_data_range, default_colormap, divergent)
 
     onany(fig.scene.viewport, ctrls.hide_controls.active) do v, hide_controls_active
         # Compute content width based on height of figure, controls, and content aspect.
@@ -118,7 +118,7 @@ function make_time_domain_figure_with_controls(observation_times, states, params
     return fig, content_layout, ctrls, heatmap_kwargs
 end
 
-function plot_states(observation_times, states, params; save_dir_root, try_interactive=false)
+function plot_states(state_times, states, params; save_dir_root, try_interactive=false)
     # Get mesh parameters in kilometers.
     grid = params.transition.mesh
     grid = MeshOptions(grid; d=grid.d ./ 1e3, origin=grid.origin ./ 1e3)
@@ -127,11 +127,11 @@ function plot_states(observation_times, states, params; save_dir_root, try_inter
     )
 
     function add_top_label(content_layout, t_idx)
-        if eltype(observation_times) == Int
+        if eltype(state_times) == Int
             top_label = @lift(string($t_idx))
             Label(content_layout[1, 1, Top()], top_label; halign=:center, valign=:bottom, font=:bold)
         else
-            t = @lift(observation_times[$t_idx])
+            t = @lift(state_times[$t_idx])
             top_label = @lift(latexstring("\$t\$ = ", cfmt("%.3g", $t / my_year), " years"))
             Label(content_layout[1, 1, Top()], top_label; halign=:center, valign=:bottom, font=:bold)
         end
@@ -139,7 +139,7 @@ function plot_states(observation_times, states, params; save_dir_root, try_inter
 
     # Do all the saturation figures.
     if haskey(states[1], :Saturation)
-        fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(observation_times, states, params)
+        fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params)
 
         add_top_label(content_layout, controls.t_idx)
         state = @lift(states[$(controls.t_idx)])
@@ -168,7 +168,7 @@ function plot_states(observation_times, states, params; save_dir_root, try_inter
     if haskey(states[1], :Pressure)
         # default_data_range = (0e0, 5e7)
         default_data_range = extrema(Iterators.flatten(extrema.(s[:Pressure] for s in states)))
-        fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(observation_times, states, params; default_data_range)
+        fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params; default_data_range)
 
         add_top_label(content_layout, controls.t_idx)
         state = @lift(states[$(controls.t_idx)])
@@ -205,7 +205,7 @@ function plot_states(observation_times, states, params; save_dir_root, try_inter
             println("pressure is constant at $(states[1][:Pressure][1])")
         else
             default_data_range = (-max_diff, max_diff)
-            fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(observation_times, states, params; 
+            fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params; 
                 default_data_range,
                 default_colormap=Reverse(:RdBu),
                 divergent=true,
@@ -243,7 +243,7 @@ function plot_states(observation_times, states, params; save_dir_root, try_inter
         if default_data_range[1] == default_data_range[2]
             println("permeability is constant at ", states[1][:Permeability][1])
         else
-            fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(observation_times, states, params; default_data_range)
+            fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params; default_data_range)
 
             add_top_label(content_layout, controls.t_idx)
             state = @lift(states[$(controls.t_idx)])

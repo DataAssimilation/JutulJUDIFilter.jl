@@ -67,20 +67,27 @@ params_transition = JutulOptions(;
     ),
 )
 
+
+observer_options = NoisyObservationOptions(;
+    noise_scale=1.0,
+    keys=(:Saturation,),
+)
+
 ground_truth = ModelOptions(;
     transition=params_transition,
-    observation=NoisyObservationOptions(;
-        timestep_size=1yr,
-        noise_scale=1.0,
-        num_timesteps=5,
-        keys=(:Saturation,),
-    )
+    observation=MultiTimeObserverOptions(; observers=(
+        1yr => observer_options,
+        2yr => observer_options,
+        3yr => observer_options,
+        4yr => observer_options,
+        5yr => observer_options,
+    )),
 )
 
 params = JutulJUDIFilterOptions(;
     ground_truth,
     ensemble=EnsembleOptions(;
-        size = 10,
+        size = 2,
         seed = 9347215,
         mesh = params_transition.mesh,
         permeability_v_over_h=0.36,
@@ -99,11 +106,12 @@ params = JutulJUDIFilterOptions(;
     estimator=EstimatorOptions(;
         transition=ground_truth.transition,
         observation=ground_truth.observation,
-        algorithm=nothing,
-        # algorithm=EnKFOptions(;
-        #     noise=NoiseOptions(; std=1, type=:diagonal),
-        #     include_noise_in_obs_covariance=false,
-        #     rho = 0,
-        # ),
+        # algorithm=nothing,
+        assimilation_keys=(:Saturation,),
+        algorithm=EnKFOptions(;
+            noise=NoiseOptions(; std=1, type=:diagonal),
+            include_noise_in_obs_covariance=false,
+            rho = 0,
+        ),
     ),
 )

@@ -38,53 +38,52 @@ function generate_ground_truth(params)
     # K = (Val(:OverallMoleFraction), Val(:Pressure))
     JMT = JutulModelTranslator(K)
 
+    ## Set seed for ground-truth simulation.
+    Random.seed!(0xabceabd47cada8f4)
+
     options = params.transition
     options = JutulOptions(
         options; time=(TimeDependentOptions(options.time[1]; years=1.0, steps=1),)
     )
     M = JutulModel(; translator=JMT, options)
 
-    observation_times = let
-        step = params.observation.timestep_size
-        length = params.observation.num_timesteps + 1
-        range(; start=0, length, step)
-    end
-
     ## Make operators.
-    observer = get_observer(params.observation)
-
-    ## Set seed for ground-truth simulation.
-    Random.seed!(0xfee55e45)
-    xor_seed!(observer, UInt64(0x243ecae5))
+    observers = get_multi_time_observer(params.observation)
 
     ground_truth = @time let
         state = Dict{Symbol,Any}()
         initialize_member!(M, state)
 
-        ## Set seed for ground-truth simulation.
-        Random.seed!(0xfee55e45)
-        xor_seed!(observer, UInt64(0x243ecae5))
-
         ## Generate states and observations.
         t0 = 0.0
-        states = Vector{Dict{Symbol,Any}}(undef, length(observation_times))
-        observations = Vector{Dict{Symbol,Any}}(undef, length(observation_times))
+        states = Vector{Dict{Symbol,Any}}(undef, 1+length(observers.unique_times))
+        observations = Vector{Dict{Symbol,Any}}(undef, length(observers.times))
         states[1] = deepcopy(state)
-        observations[1] = observer(state)
-        @progress "Ground-truth" for (i, t) in enumerate(observation_times[2:end])
-            state = M(state, t0, t)
+        obs_idx = 1
+        state_idx = 2
+        @progress "Ground-truth" for (t, observer_options) in observers.times_observers
+            if t0 != t
+                state = M(state, t0, t)
+                states[state_idx] = deepcopy(state)
+                state_idx += 1
+            end
+            Random.seed!(0xabceabd47cada8f4 ⊻ hash(t))
+            observer = get_observer(observer_options)
+            xor_seed!(observer, UInt64(0xabc2fe2e546a031c) ⊻ hash(t))
             obs = observer(state)
-            states[i + 1] = deepcopy(state)
-            observations[i + 1] = split_clean_noisy(observer, obs)[2]
+            observations[obs_idx] = split_clean_noisy(observer, obs)[2]
+            obs_idx += 1
             t0 = t
         end
-        (; states, observations)
+        state_times = unique(vcat(0.0, observers.unique_times))
+        (; states, observations, state_times, observation_times=observers.times)
     end
     println("  ^ timing for making ground truth data")
     return data = Dict(
         "states" => ground_truth.states,
         "observations" => ground_truth.observations,
-        "observation_times" => observation_times,
+        "state_times" => ground_truth.state_times,
+        "observation_times" => ground_truth.observation_times,
     )
 end
 

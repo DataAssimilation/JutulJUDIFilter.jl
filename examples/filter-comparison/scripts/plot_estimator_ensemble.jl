@@ -11,6 +11,7 @@ using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave
 using CairoMakie: Label
 using Format: cfmt
 using JutulJUDIFilter
+using Statistics: mean, std
 
 include(srcdir("generate_initial_ensemble.jl"))
 include(srcdir("run_estimator.jl"))
@@ -22,20 +23,22 @@ data_ensemble, _, filestem_ensemble = produce_or_load_run_estimator(params; load
 
 ensembles = data_ensemble["ensembles"]
 save_dir_root = plotsdir("estimator_ensemble", "states", filestem_ensemble)
-
 with_theme(theme_latexfonts()) do
     update_theme!(; fontsize=30)
-    observation_times = [e.t for e in ensembles]
-    states = [mean(e.ensemble) for e in ensembles]
-    plot_states(observation_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "mean"))
 
-    states = [var(e.ensemble) for e in ensembles]
-    plot_states(observation_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "var"))
+    state_keys = collect(keys(ensembles[1].ensemble.members[1]))
 
-    observation_times = [e.t for e in ensembles]
+    ensemble_times = [e.t for e in ensembles]
+    states = [mean(e.ensemble; state_keys=state_keys) for e in ensembles]
+    plot_states(ensemble_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "mean"))
+
+    states = [std(e.ensemble; state_keys=state_keys) for e in ensembles]
+    plot_states(ensemble_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "var"))
+
+    ensemble_times = [e.t for e in ensembles]
     for i = 1:min(length(ensembles[1].ensemble.members), 2)
         states = [e.ensemble.members[i] for e in ensembles]
-        plot_states(observation_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "e$i"))
+        plot_states(ensemble_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "e$i"), try_interactive=false)
     end
     # for (i, ensemble_info) in enumerate(ensembles)
     #     ensemble = ensemble_info.ensemble

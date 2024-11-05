@@ -47,10 +47,8 @@ function run_estimator(params)
 
     states_gt = data_gt["states"]
     observations_gt = data_gt["observations"]
-    ts_gt = data_gt["observation_times"]
 
     ensemble = data_initial["ensemble"]
-
 
     K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
     JMT = JutulModelTranslator(K)
@@ -60,19 +58,17 @@ function run_estimator(params)
         options; time=(TimeDependentOptions(options.time[1]; years=1.0, steps=1),)
     )
     M = JutulModel(; translator=JMT, options)
-    observer = get_observer(params_estimator.observation)
+    observers = get_multi_time_observer(params_estimator.observation)
 
     # Initialize member for all primary variables in simulation.
     @progress "Initialize ensemble states" for member in get_ensemble_members(ensemble)
-        a = mean(member[:Saturation])
         initialize_member!(M, member)
-        println("prior_mean: $(a), post_mean: $(mean(member[:Saturation]))")
     end
 
-    Random.seed!(0x02cc4823)
-    xor_seed!(observer, UInt64(0x54847e5f))
+    global estimator = get_estimator(params_estimator.algorithm)
 
-    global estimator = get_estimator(params_estimator.algorithm, 325*341)
+    empty!(ensemble.state_keys)
+    append!(ensemble.state_keys, params_estimator.assimilation_keys)
 
     t0 = 0.0
     data = filter_loop(
@@ -80,9 +76,8 @@ function run_estimator(params)
         t0,
         estimator,
         M,
-        observer,
-        observations_gt,
-        ts_gt;
+        observers,
+        observations_gt;
         name=get_short_name(params_estimator.algorithm),
     )
 end

@@ -4,19 +4,24 @@ using ConfigurationsJutulDarcy
 using ConfigurationsJutulDarcy: @option
 using ConfigurationsJutulDarcy: SVector
 
-@option struct NoisyObservationOptions{N}
+@option struct NoisyObservationOptions
     noise_scale = 2
-    timestep_size
-    num_timesteps = 6
     seed = 0
     only_noisy = false
-    keys::NTuple{N, Symbol}
+    keys::Tuple{Vararg{Symbol}}
 end
 
-@option struct ModelOptions
-    version = "v0.2"
-    transition::JutulOptions
-    observation::NoisyObservationOptions
+@option struct MultiTimeObserverOptions
+    observers::Tuple{Vararg{Pair{Float64, Any}}}
+end
+
+@option struct SeismicObserverOptions
+end
+
+@option struct WellObserverOptions
+end
+
+@option struct RockPhysicsModelOptions
 end
 
 @option struct GaussianPriorOptions
@@ -24,20 +29,12 @@ end
     std = 1
 end
 
-@option struct EnsembleOptions
-    version::String = "v0.1"
-    size::Int64
-    seed::UInt64
-    mesh::MeshOptions
-    permeability_v_over_h::Float64
-    prior::NamedTuple
-end
-
 @option struct EstimatorOptions
     version = "v0.1"
     transition::JutulOptions
-    observation::NoisyObservationOptions
+    observation::MultiTimeObserverOptions
     algorithm
+    assimilation_keys::Tuple{Vararg{Symbol}}
 end
 
 @option struct NoiseOptions
@@ -54,12 +51,6 @@ end
 get_short_name(::T) where T = string(T)
 get_short_name(::EnKFOptions) = "EnKF"
 
-@option struct JutulJUDIFilterOptions
-    version::String = "v0.3"
-    ground_truth::ModelOptions
-    ensemble::EnsembleOptions
-    estimator::EstimatorOptions
-end
 
 using Ensembles: Ensembles
 function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
@@ -78,4 +69,26 @@ function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
     end
 
     return NoisyObserver(op, state_keys, noise_scale, rng, seed, params.only_noisy)
+end
+
+@option struct ModelOptions
+    version = "v0.2"
+    transition::JutulOptions
+    observation::MultiTimeObserverOptions
+end
+
+@option struct EnsembleOptions
+    version::String = "v0.1"
+    size::Int64
+    seed::UInt64
+    mesh::MeshOptions
+    permeability_v_over_h::Float64
+    prior::NamedTuple
+end
+
+@option struct JutulJUDIFilterOptions
+    version::String = "v0.3"
+    ground_truth::ModelOptions
+    ensemble::EnsembleOptions
+    estimator::EstimatorOptions
 end
