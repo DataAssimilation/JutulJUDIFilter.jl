@@ -118,7 +118,7 @@ function make_time_domain_figure_with_controls(observation_times, states, params
     return fig, content_layout, ctrls, heatmap_kwargs
 end
 
-function plot_states(observation_times, states, params; save_dir_root, try_interactive=true)
+function plot_states(observation_times, states, params; save_dir_root, try_interactive=false)
     # Get mesh parameters in kilometers.
     grid = params.transition.mesh
     grid = MeshOptions(grid; d=grid.d ./ 1e3, origin=grid.origin ./ 1e3)

@@ -4,12 +4,13 @@ using ConfigurationsJutulDarcy
 using ConfigurationsJutulDarcy: @option
 using ConfigurationsJutulDarcy: SVector
 
-@option struct NoisyObservationOptions
+@option struct NoisyObservationOptions{N}
     noise_scale = 2
     timestep_size
     num_timesteps = 6
     seed = 0
     only_noisy = false
+    keys::NTuple{N, Symbol}
 end
 
 @option struct ModelOptions

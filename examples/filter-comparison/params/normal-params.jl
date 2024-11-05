@@ -69,7 +69,12 @@ params_transition = JutulOptions(;
 
 ground_truth = ModelOptions(;
     transition=params_transition,
-    observation=NoisyObservationOptions(; timestep_size=1yr, num_timesteps=5)
+    observation=NoisyObservationOptions(;
+        timestep_size=1yr,
+        noise_scale=1.0,
+        num_timesteps=5,
+        keys=(:Saturation,),
+    )
 )
 
 params = JutulJUDIFilterOptions(;
@@ -94,11 +99,11 @@ params = JutulJUDIFilterOptions(;
     estimator=EstimatorOptions(;
         transition=ground_truth.transition,
         observation=ground_truth.observation,
-        # algorithm=nothing,
-        algorithm=EnKFOptions(;
-            noise=NoiseOptions(; std=1, type=:diagonal),
-            include_noise_in_obs_covariance=false,
-            rho = 0,
-        ),
+        algorithm=nothing,
+        # algorithm=EnKFOptions(;
+        #     noise=NoiseOptions(; std=1, type=:diagonal),
+        #     include_noise_in_obs_covariance=false,
+        #     rho = 0,
+        # ),
     ),
 )

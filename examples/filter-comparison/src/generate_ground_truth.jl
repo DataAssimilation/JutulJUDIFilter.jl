@@ -29,14 +29,13 @@ using JLD2: JLD2
 
 include("jutul_model.jl")
 include("options.jl")
+include("observer.jl")
 
 # Generate synthetic ground-truth observations.
 function generate_ground_truth(params)
     K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
     # K = (Val(:Saturation), Val(:Pressure))
     # K = (Val(:OverallMoleFraction), Val(:Pressure))
-    state_keys = (:Saturation, :Pressure)
-    # state_keys = (:OverallMoleFraction, :Pressure)
     JMT = JutulModelTranslator(K)
 
     options = params.transition
@@ -52,7 +51,7 @@ function generate_ground_truth(params)
     end
 
     ## Make operators.
-    observer = NoisyObserver(state_keys; params=params.observation)
+    observer = get_observer(params.observation)
 
     ## Set seed for ground-truth simulation.
     Random.seed!(0xfee55e45)

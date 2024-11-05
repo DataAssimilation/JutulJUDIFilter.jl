@@ -30,6 +30,7 @@ using JLD2: JLD2
 
 include("jutul_model.jl")
 include("options.jl")
+include("observer.jl")
 include("estimator.jl")
 include("filter_loop.jl")
 
@@ -52,7 +53,6 @@ function run_estimator(params)
 
 
     K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
-    state_keys = (:Saturation, :Pressure)
     JMT = JutulModelTranslator(K)
 
     options = params_estimator.transition
@@ -60,7 +60,7 @@ function run_estimator(params)
         options; time=(TimeDependentOptions(options.time[1]; years=1.0, steps=1),)
     )
     M = JutulModel(; translator=JMT, options)
-    observer = NoisyObserver(collect(state_keys); params=params_estimator.observation)
+    observer = get_observer(params_estimator.observation)
 
     # Initialize member for all primary variables in simulation.
     @progress "Initialize ensemble states" for member in get_ensemble_members(ensemble)
@@ -72,7 +72,7 @@ function run_estimator(params)
     Random.seed!(0x02cc4823)
     xor_seed!(observer, UInt64(0x54847e5f))
 
-    global estimator = get_estimator(params_estimator.algorithm, 325*341*2)
+    global estimator = get_estimator(params_estimator.algorithm, 325*341)
 
     t0 = 0.0
     data = filter_loop(
