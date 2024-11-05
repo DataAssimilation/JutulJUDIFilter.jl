@@ -319,7 +319,6 @@ function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where {K}
 
     member_to_sim!(M, M.translator, member, M.state0, M.domain)
     if modifies_domain(M.translator)
-        println("MODIFIED domain")
         parameters = setup_parameters(model)
     end
     result = simulate_reservoir(state0, model, dt; parameters, forces, M.kwargs...)

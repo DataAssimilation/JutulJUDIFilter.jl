@@ -40,13 +40,17 @@ end
 function make_sampler(seed, mesh_options::MeshOptions, prior::FieldOptions)
     rng = Random.MersenneTwister(seed)
     field = create_field(mesh_options.n, prior.suboptions)
+    if ndims(field) == 2
+        field = reshape(field, 1, size(field)...)
+    end
     permutation = Random.randperm(rng, size(field, 1))
     return FileSampler(field, permutation, 0)
 end
 
 function generate_prior_sample(sampler::FileSampler)
     if sampler.i >= length(sampler.permutation)
-        error("There are only $(length(sampler.permutation)) samples available")
+        sampler.i = 0
+        # error("There are only $(length(sampler.permutation)) samples available")
     end
     sampler.i += 1
     return sampler.field[sampler.permutation[sampler.i], :, :]

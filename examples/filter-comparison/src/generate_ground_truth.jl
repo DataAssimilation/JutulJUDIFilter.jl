@@ -32,8 +32,8 @@ include("options.jl")
 
 # Generate synthetic ground-truth observations.
 function generate_ground_truth(params)
-    # K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
-    K = (Val(:Saturation), Val(:Pressure))
+    K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
+    # K = (Val(:Saturation), Val(:Pressure))
     # K = (Val(:OverallMoleFraction), Val(:Pressure))
     state_keys = (:Saturation, :Pressure)
     # state_keys = (:OverallMoleFraction, :Pressure)

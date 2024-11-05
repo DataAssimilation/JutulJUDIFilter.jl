@@ -94,11 +94,11 @@ params = JutulJUDIFilterOptions(;
     estimator=EstimatorOptions(;
         transition=ground_truth.transition,
         observation=ground_truth.observation,
-        algorithm=nothing,
-        # algorithm=EnKFOptions(;
-        #     noise=NoiseOptions(; std=1, type=:diagonal),
-        #     include_noise_in_obs_covariance=false,
-        #     rho = 0,
-        # ),
+        # algorithm=nothing,
+        algorithm=EnKFOptions(;
+            noise=NoiseOptions(; std=1, type=:diagonal),
+            include_noise_in_obs_covariance=false,
+            rho = 0,
+        ),
     ),
 )
