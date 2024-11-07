@@ -17,33 +17,41 @@ include(srcdir("parula.jl"))
 my_year = 3600 * 24 * 365.2425
 mD_to_m2 = 9.869233e-16
 
-plot_data(content_layout, state, params, key::Symbol; kwargs...) = plot_data(content_layout, state, params, Val(key); kwargs...)
+function plot_data(content_layout, state, params, key::Symbol; kwargs...)
+    return plot_data(content_layout, state, params, Val(key); kwargs...)
+end
 
 function plot_data(content_layout, state, params, key_func; kwargs...)
     data = @lift(key_func($state))
-    plot_scalar_field(content_layout, data, params; kwargs...)
+    return plot_scalar_field(content_layout, data, params; kwargs...)
 end
 
-function plot_data(content_layout, state, params, ::Val{:Saturation}; threshold=0.0, kwargs...)
+function plot_data(
+    content_layout, state, params, ::Val{:Saturation}; threshold=0.0, kwargs...
+)
     data = @lift let
         data = $state[:Saturation]
         data_thresholded = ifelse.(abs.(data) .< 0, $threshold, data)
         data_zeros = ifelse.(data_thresholded .<= 0, NaN, data_thresholded)
     end
-    plot_scalar_field(content_layout, data, params; kwargs...)
+    return plot_scalar_field(content_layout, data, params; kwargs...)
 end
 
-function plot_data(content_layout, state, params, ::Val{:Pressure}; heatmap_kwargs, kwargs...)
+function plot_data(
+    content_layout, state, params, ::Val{:Pressure}; heatmap_kwargs, kwargs...
+)
     # Convert data to MPa.
     data = @lift($state[:Pressure] ./ 1e6)
     if haskey(heatmap_kwargs, :colorrange)
         colorrange = @lift($(heatmap_kwargs[:colorrange]) ./ 1e6)
         heatmap_kwargs = (; heatmap_kwargs..., colorrange)
     end
-    plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
+    return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
-function plot_data(content_layout, state, params, ::Val{:Permeability}; heatmap_kwargs, kwargs...)
+function plot_data(
+    content_layout, state, params, ::Val{:Permeability}; heatmap_kwargs, kwargs...
+)
     data = @lift begin
         s = size($state[:Permeability])
         if s[1] == 3 && length(s) > 1
@@ -56,10 +64,12 @@ function plot_data(content_layout, state, params, ::Val{:Permeability}; heatmap_
         colorrange = @lift($(heatmap_kwargs[:colorrange]) ./ mD_to_m2)
         heatmap_kwargs = (; heatmap_kwargs..., colorrange)
     end
-    plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
+    return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
-function plot_data(content_layout, state, params, ::Val{:dshot}; timeR, dtR, nsrc, heatmap_kwargs)
+function plot_data(
+    content_layout, state, params, ::Val{:dshot}; timeR, dtR, nsrc, heatmap_kwargs
+)
     data = @lift begin
         if isa($state, Dict)
             $state[:dshot] ./ 1e6
@@ -79,12 +89,12 @@ function plot_data(content_layout, state, params, ::Val{:dshot}; timeR, dtR, nsr
         (4, 2)
     end
     CI = CartesianIndices(grid)
-    layer1 = GridLayout(content_layout[1,1])
+    layer1 = GridLayout(content_layout[1, 1])
     layout = GridLayout(layer1[2, 1])
     rowsize!(layer1, 1, Fixed(0))
 
     local hm
-    times = @lift(range(start=0, stop=$timeR/1e3, step=$dtR/1e3))
+    times = @lift(range(start=0, stop=$timeR / 1e3, step=$dtR / 1e3))
     src_range = StepRange(1, max(1, nsrc ÷ prod(grid)), nsrc)
     @show src_range
     for (i, ci) in zip(src_range, CI)
@@ -92,7 +102,7 @@ function plot_data(content_layout, state, params, ::Val{:dshot}; timeR, dtR, nsr
         grid_ci = (ci.I[2], ci.I[1])
 
         layout_ci = layout[grid_ci...]
-        ax = Axis(layout_ci[1,1], yreversed=true)
+        ax = Axis(layout_ci[1, 1]; yreversed=true)
         colsize!(layout, grid_ci[2], Aspect(1, 0.75))
 
         # layout_ci = GridLayout(layout[grid_ci...])
@@ -124,7 +134,7 @@ function plot_data(content_layout, state, params, ::Val{:dshot}; timeR, dtR, nsr
     rowgap!(layout, 35)
     rowgap!(layer1, 0)
     colgap!(layout, 0)
-    Colorbar(layout[:, end+1], hm; label = "amplitude (Pa)")
+    return Colorbar(layout[:, end + 1], hm; label="amplitude (Pa)")
 end
 
 function plot_data(content_layout, state, params, ::Val{:rtm}; heatmap_kwargs, kwargs...)
@@ -139,7 +149,7 @@ function plot_data(content_layout, state, params, ::Val{:rtm}; heatmap_kwargs, k
         colorrange = @lift($(heatmap_kwargs[:colorrange]) ./ 1e6)
         heatmap_kwargs = (; heatmap_kwargs..., colorrange)
     end
-    plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
+    return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
 function plot_scalar_field(content_layout, data, params; grid_2d, heatmap_kwargs=(;))
@@ -150,11 +160,7 @@ function plot_scalar_field(content_layout, data, params; grid_2d, heatmap_kwargs
 
     shaped_data = @lift(reshape($data, grid_2d.n))
     hm = plot_heatmap_from_grid!(
-        ax,
-        shaped_data,
-        grid_2d;
-        make_heatmap=true,
-        heatmap_kwargs...
+        ax, shaped_data, grid_2d; make_heatmap=true, heatmap_kwargs...
     )
 
     cb = Colorbar(content_layout[1, 2], hm)
@@ -180,11 +186,19 @@ end
 
 function make_time_domain_figure_with_controls(state_times, states, params; kwargs...)
     content_aspect = get_grid_col_aspect(params.transition.mesh)
-    make_time_figure_with_controls(state_times, states; content_aspect, kwargs...)
+    return make_time_figure_with_controls(state_times, states; content_aspect, kwargs...)
 end
 
-function make_time_figure_with_controls(state_times, states;
-    default_data_range=(0,1), default_colormap=parula, divergent=false, fig_scale = 96, content_aspect=1.0, content_height = round(Int, 6 * fig_scale))
+function make_time_figure_with_controls(
+    state_times,
+    states;
+    default_data_range=(0, 1),
+    default_colormap=parula,
+    divergent=false,
+    fig_scale=96,
+    content_aspect=1.0,
+    content_height=round(Int, 6 * fig_scale),
+)
     # Set up the figure with controls.
     content_size = (round(Int, content_height * content_aspect), content_height)
     fig = Figure(; size=content_size)
@@ -195,7 +209,15 @@ function make_time_figure_with_controls(state_times, states;
         default_data_range = (-s, s)
     end
 
-    ctrls, heatmap_kwargs = set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale, default_data_range, default_colormap, divergent)
+    ctrls, heatmap_kwargs = set_up_time_heatmap_controls(
+        fig,
+        content_size,
+        state_times;
+        fig_scale,
+        default_data_range,
+        default_colormap,
+        divergent,
+    )
 
     onany(fig.scene.viewport, ctrls.hide_controls.active) do v, hide_controls_active
         # Compute content width based on height of figure, controls, and content aspect.
@@ -219,18 +241,30 @@ end
 function add_top_label(state_times, content_layout, t_idx)
     if eltype(state_times) == Int
         top_label = @lift(string($t_idx))
-        Label(content_layout[1, 1, Top()], top_label; halign=:center, valign=:bottom, font=:bold)
+        Label(
+            content_layout[1, 1, Top()],
+            top_label;
+            halign=:center,
+            valign=:bottom,
+            font=:bold,
+        )
     else
         t = @lift(state_times[$t_idx])
         top_label = @lift(latexstring("\$t\$ = ", cfmt("%.3g", $t / my_year), " years"))
-        Label(content_layout[1, 1, Top()], top_label; halign=:center, valign=:bottom, font=:bold)
+        Label(
+            content_layout[1, 1, Top()],
+            top_label;
+            halign=:center,
+            valign=:bottom,
+            font=:bold,
+        )
     end
 end
 
 function get_2d_plotting_mesh(grid)
     # Get mesh parameters in kilometers.
     grid = MeshOptions(grid; d=grid.d ./ 1e3, origin=grid.origin ./ 1e3)
-    grid_2d = MeshOptions(
+    return grid_2d = MeshOptions(
         grid; d=grid.d[[1, end]], origin=grid.origin[[1, end]], n=grid.n[[1, end]]
     )
 end
@@ -240,22 +274,34 @@ function plot_states(state_times, states, params; save_dir_root, try_interactive
     @assert length(states) == length(state_times)
 
     if haskey(states[1], :Saturation)
-        plot_states(state_times, states, params, Val(:Saturation); save_dir_root, try_interactive)
+        plot_states(
+            state_times, states, params, Val(:Saturation); save_dir_root, try_interactive
+        )
     end
 
     if haskey(states[1], :Pressure)
-        plot_states(state_times, states, params, Val(:Pressure); save_dir_root, try_interactive)
-        plot_states(state_times, states, params, Val(:Pressure_diff); save_dir_root, try_interactive)
+        plot_states(
+            state_times, states, params, Val(:Pressure); save_dir_root, try_interactive
+        )
+        plot_states(
+            state_times, states, params, Val(:Pressure_diff); save_dir_root, try_interactive
+        )
     end
 
     if haskey(states[1], :Permeability)
-        plot_states(state_times, states, params, Val(:Permeability); save_dir_root, try_interactive)
+        plot_states(
+            state_times, states, params, Val(:Permeability); save_dir_root, try_interactive
+        )
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:Saturation}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:Saturation}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params)
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times, states, params
+    )
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
@@ -280,17 +326,21 @@ function plot_states(state_times, states, params, ::Val{:Saturation}; save_dir_r
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:Pressure}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:Pressure}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     # default_data_range = (0e0, 5e7)
     default_data_range = extrema(Iterators.flatten(extrema.(s[:Pressure] for s in states)))
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params; default_data_range)
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times, states, params; default_data_range
+    )
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
     ax = plot_data(content_layout, state, params, :Pressure; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = "MPa"
 
     controls.interactive_savor.active[] = true
@@ -312,19 +362,26 @@ function plot_states(state_times, states, params, ::Val{:Pressure}; save_dir_roo
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:Pressure_diff}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:Pressure_diff}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     function pressure_diff(state)
-        state[:Pressure] .- states[1][:Pressure]
+        return state[:Pressure] .- states[1][:Pressure]
     end
     # default_data_range = (-2e6, 2e6)
-    max_diff = maximum(maximum.(maximum.(abs.(s[:Pressure] .- states[1][:Pressure]) for s in states)))
+    max_diff = maximum(
+        maximum.(maximum.(abs.(s[:Pressure] .- states[1][:Pressure]) for s in states))
+    )
     if max_diff == 0
         println("pressure is constant at $(states[1][:Pressure][1])")
-        return
+        return nothing
     end
     default_data_range = (-max_diff, max_diff)
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params; 
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times,
+        states,
+        params;
         default_data_range,
         default_colormap=Reverse(:RdBu),
         divergent=true,
@@ -334,7 +391,7 @@ function plot_states(state_times, states, params, ::Val{:Pressure_diff}; save_di
     state = @lift(states[$(controls.t_idx)])
     ax = plot_data(content_layout, state, params, pressure_diff; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = "MPa"
 
     controls.interactive_savor.active[] = true
@@ -356,23 +413,26 @@ function plot_states(state_times, states, params, ::Val{:Pressure_diff}; save_di
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:Permeability}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:Permeability}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
-    default_data_range = extrema(Iterators.flatten(extrema.(s[:Permeability] for s in states)))
+    default_data_range = extrema(
+        Iterators.flatten(extrema.(s[:Permeability] for s in states))
+    )
     if default_data_range[1] == default_data_range[2]
         println("permeability is constant at ", states[1][:Permeability][1])
-        return
+        return nothing
     end
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params;
-        default_data_range,
-        default_colormap=Reverse(:Purples),
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times, states, params; default_data_range, default_colormap=Reverse(:Purples)
     )
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
     ax = plot_data(content_layout, state, params, :Permeability; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = "millidarcy"
 
     controls.interactive_savor.active[] = true
@@ -394,15 +454,19 @@ function plot_states(state_times, states, params, ::Val{:Permeability}; save_dir
     end
 end
 
-
-function plot_states(state_times, states, params, ::Val{:rtm}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:rtm}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     default_data_range = extrema(Iterators.flatten(extrema.(s[:rtm] for s in states)))
     if default_data_range[1] == default_data_range[2]
         println("rtm is constant at ", states[1][:rtm][1])
-        return
+        return nothing
     end
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params;
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times,
+        states,
+        params;
         default_data_range,
         default_colormap=Reverse(:RdBu),
         divergent=true,
@@ -413,7 +477,7 @@ function plot_states(state_times, states, params, ::Val{:rtm}; save_dir_root, tr
 
     ax = plot_data(content_layout, state, params, :rtm; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = L"SI RTM / $10^6$"
 
     controls.interactive_savor.active[] = true
@@ -435,19 +499,24 @@ function plot_states(state_times, states, params, ::Val{:rtm}; save_dir_root, tr
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:rtm_diff}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:rtm_diff}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     function rtm_diff(state)
-        state[:rtm] .- states[1][:rtm]
+        return state[:rtm] .- states[1][:rtm]
     end
     # default_data_range = (-2e6, 2e6)
     max_diff = maximum(maximum.(maximum.(abs.(s) for s in rtm_diff.(states))))
     if max_diff == 0
         println("rtm is constant at $(states[1][:rtm][1])")
-        return
+        return nothing
     end
     default_data_range = (-max_diff, max_diff)
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params;
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times,
+        states,
+        params;
         default_data_range,
         default_colormap=Reverse(:RdBu),
         divergent=true,
@@ -458,7 +527,7 @@ function plot_states(state_times, states, params, ::Val{:rtm_diff}; save_dir_roo
 
     ax = plot_data(content_layout, state, params, :rtm; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = L"SI RTM / $10^6$"
 
     controls.interactive_savor.active[] = true
@@ -491,17 +560,23 @@ function get_shot_extrema(data)
     return cr
 end
 
-function plot_states(state_times, states, params, ::Val{:dshot}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:dshot}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
-    max_diff = maximum(abs.(extrema(Iterators.flatten(get_shot_extrema.(s[:dshot] for s in states)))))
+    max_diff = maximum(
+        abs.(extrema(Iterators.flatten(get_shot_extrema.(s[:dshot] for s in states))))
+    )
     if max_diff == 0
         println("dshot is constant at ", states[1][:dshot][1][1])
-        return
+        return nothing
     end
     default_data_range = (-max_diff, max_diff)
 
-    content_aspect = 16/9
-    global fig, content_layout, controls, heatmap_kwargs = make_time_figure_with_controls(state_times, states;
+    content_aspect = 16 / 9
+    global fig, content_layout, controls, heatmap_kwargs = make_time_figure_with_controls(
+        state_times,
+        states;
         default_data_range,
         content_aspect,
         default_colormap=Reverse(:balance),
@@ -540,20 +615,26 @@ function plot_states(state_times, states, params, ::Val{:dshot}; save_dir_root, 
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:dshot_diff}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:dshot_diff}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     function dshot_diff(state)
-        [d .- d0 for (d0, d) in zip(states[1][:dshot], state[:dshot])]
+        return [d .- d0 for (d0, d) in zip(states[1][:dshot], state[:dshot])]
     end
-    max_diff = maximum(abs.(extrema(Iterators.flatten(get_shot_extrema.(dshot_diff.(states))))))
+    max_diff = maximum(
+        abs.(extrema(Iterators.flatten(get_shot_extrema.(dshot_diff.(states)))))
+    )
     if max_diff == 0
         println("dshot is constant at ", states[1][:dshot][1])
-        return
+        return nothing
     end
     default_data_range = (-max_diff, max_diff)
 
-    content_aspect = 16/9
-    fig, content_layout, controls, heatmap_kwargs = make_time_figure_with_controls(state_times, states;
+    content_aspect = 16 / 9
+    fig, content_layout, controls, heatmap_kwargs = make_time_figure_with_controls(
+        state_times,
+        states;
         default_data_range,
         content_aspect,
         default_colormap=Reverse(:balance),
@@ -592,22 +673,23 @@ function plot_states(state_times, states, params, ::Val{:dshot_diff}; save_dir_r
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:velocity}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:velocity}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     default_data_range = extrema(Iterators.flatten(extrema.(s for s in states))) ./ 1e3
     if default_data_range[1] == default_data_range[2]
         println("velocity is constant at ", states[1][1])
-        return
+        return nothing
     end
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params;
-        default_data_range,
-        default_colormap=:YlOrRd,
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times, states, params; default_data_range, default_colormap=:YlOrRd
     )
 
     state = @lift(states[$(controls.t_idx)] ./ 1e3)
     ax = plot_scalar_field(content_layout, state, params; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = "km/s"
 
     controls.interactive_savor.active[] = true
@@ -629,22 +711,23 @@ function plot_states(state_times, states, params, ::Val{:velocity}; save_dir_roo
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:velocity0}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:velocity0}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     default_data_range = extrema(Iterators.flatten(extrema.(s for s in states))) ./ 1e3
     if default_data_range[1] == default_data_range[2]
         println("velocity0 is constant at ", states[1][1])
-        return
+        return nothing
     end
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params;
-        default_data_range,
-        default_colormap=:YlOrRd,
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times, states, params; default_data_range, default_colormap=:YlOrRd
     )
 
     state = @lift(states[$(controls.t_idx)] ./ 1e3)
     ax = plot_scalar_field(content_layout, state, params; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = "km/s"
 
     controls.interactive_savor.active[] = true
@@ -666,22 +749,23 @@ function plot_states(state_times, states, params, ::Val{:velocity0}; save_dir_ro
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:density}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:density}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     default_data_range = extrema(Iterators.flatten(extrema.(s for s in states))) ./ 1e3
     if default_data_range[1] == default_data_range[2]
         println("density is constant at ", states[1][1])
-        return
+        return nothing
     end
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params;
-        default_data_range,
-        default_colormap=:YlOrBr,
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times, states, params; default_data_range, default_colormap=:YlOrBr
     )
 
     state = @lift(states[$(controls.t_idx)] ./ 1e3)
     ax = plot_scalar_field(content_layout, state, params; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = "g/mL"
 
     controls.interactive_savor.active[] = true
@@ -703,22 +787,23 @@ function plot_states(state_times, states, params, ::Val{:density}; save_dir_root
     end
 end
 
-function plot_states(state_times, states, params, ::Val{:density0}; save_dir_root, try_interactive)
+function plot_states(
+    state_times, states, params, ::Val{:density0}; save_dir_root, try_interactive
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     default_data_range = extrema(Iterators.flatten(extrema.(s for s in states))) ./ 1e3
     if default_data_range[1] == default_data_range[2]
         println("density0 is constant at ", states[1][1])
-        return
+        return nothing
     end
-    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(state_times, states, params;
-        default_data_range,
-        default_colormap=:YlOrBr,
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times, states, params; default_data_range, default_colormap=:YlOrBr
     )
 
     state = @lift(states[$(controls.t_idx)] ./ 1e3)
     ax = plot_scalar_field(content_layout, state, params; grid_2d, heatmap_kwargs)
 
-    cb = content(fig[1,1][1,2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = "g/mL"
 
     controls.interactive_savor.active[] = true

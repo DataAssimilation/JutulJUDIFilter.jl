@@ -37,7 +37,6 @@ function JutulModelTranslator(K::Type)
     return JutulModelTranslator{K}()
 end
 
-
 function sim_to_member(::Val{:OverallMoleFraction}, state, domain_params)
     return state[:Reservoir][:OverallMoleFractions][2, :]
 end
@@ -77,10 +76,12 @@ function sim_to_member!(T::JutulModelTranslator{K}, member, state) where {K<:Tup
     return member
 end
 
-
 function member_to_sim!(M, ::Val{:OverallMoleFraction}, member, state, domain_params)
-    state[:Reservoir][:OverallMoleFractions][2, :] .= reshape(member[:OverallMoleFraction], :)
-    return state[:Reservoir][:OverallMoleFractions][1, :] .= 1 .- reshape(member[:OverallMoleFraction], :)
+    state[:Reservoir][:OverallMoleFractions][2, :] .= reshape(
+        member[:OverallMoleFraction], :,
+    )
+    return state[:Reservoir][:OverallMoleFractions][1, :] .=
+        1 .- reshape(member[:OverallMoleFraction], :)
 end
 
 function member_to_sim!(M, ::Val{:Saturation}, member, state, domain_params)
@@ -100,8 +101,8 @@ function member_to_sim!(M, ::Val{:Permeability}, member, state, domain_params)
     return domain_params[:permeability][:] .= reshape(perm, :)
 end
 
-function member_to_sim!(M, 
-    T::JutulModelTranslator{K}, member, state, domain_params
+function member_to_sim!(
+    M, T::JutulModelTranslator{K}, member, state, domain_params
 ) where {K<:Tuple}
     for k in fieldtypes(K)
         member_to_sim!(M, k(), member, state, domain_params)
@@ -218,7 +219,7 @@ function JutulModel6(; options, translator, kwargs=(;))
         for var_key in keys(vars)
             if model_key == :Reservoir
                 if string(var_key)[end] == 's'
-                    push!(K, Symbol(string(var_key)[1:end-1]))
+                    push!(K, Symbol(string(var_key)[1:(end - 1)]))
                 else
                     push!(K, var_key)
                 end
@@ -227,18 +228,28 @@ function JutulModel6(; options, translator, kwargs=(;))
             end
             k = K[end]
             if length(methods(member_to_sim!, (Any, Val{k}, Any, Any, Any))) == 0
-                println(quote
-                    function member_to_sim!(M, ::Val{$(Meta.quot(k))}, member, state, domain_params)
-                        state[$(Meta.quot(model_key))][$(Meta.quot(var_key))] .= member[$(Meta.quot(k))]
-                    end
-                end)
+                println(
+                    quote
+                        function member_to_sim!(
+                            M, ::Val{$(Meta.quot(k))}, member, state, domain_params
+                        )
+                            return state[$(Meta.quot(model_key))][$(Meta.quot(var_key))] .= member[$(Meta.quot(
+                                k
+                            ))]
+                        end
+                    end,
+                )
             end
             if length(methods(sim_to_member, (Val{k}, Any, Any))) == 0
-                println(quote
-                    function sim_to_member(::Val{$(Meta.quot(k))}, state, domain_params)
-                        state[$(Meta.quot(model_key))][$(Meta.quot(var_key))]
-                    end
-                end)
+                println(
+                    quote
+                        function sim_to_member(
+                            ::Val{$(Meta.quot(k))}, state, domain_params
+                        )
+                            return state[$(Meta.quot(model_key))][$(Meta.quot(var_key))]
+                        end
+                    end,
+                )
             end
         end
     end
@@ -261,7 +272,6 @@ function JutulModel6(; options, translator, kwargs=(;))
         parameters,
     )
 end
-
 
 # function (M::JutulModel)(member::Dict)
 #     state0 = get_state0(member)
@@ -328,29 +338,30 @@ function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where {K}
 end
 
 function member_to_sim!(M, ::Val{:Injector_Pressure}, member, state, domain_params)
-    (state[:Injector])[:Pressure] .= member[:Injector_Pressure]
+    return (state[:Injector])[:Pressure] .= member[:Injector_Pressure]
 end
 
 function sim_to_member(::Val{:Injector_Pressure}, state, domain_params)
-    (state[:Injector])[:Pressure]
+    return (state[:Injector])[:Pressure]
 end
 
 function member_to_sim!(M, ::Val{:Injector_Saturations}, member, state, domain_params)
-    (state[:Injector])[:Saturations] .= member[:Injector_Saturations]
+    return (state[:Injector])[:Saturations] .= member[:Injector_Saturations]
 end
 
 function sim_to_member(::Val{:Injector_Saturations}, state, domain_params)
-    (state[:Injector])[:Saturations]
+    return (state[:Injector])[:Saturations]
 end
 
-function member_to_sim!(M, ::Val{:Facility_TotalSurfaceMassRate}, member, state, domain_params)
-    (state[:Facility])[:TotalSurfaceMassRate] .= member[:Facility_TotalSurfaceMassRate]
+function member_to_sim!(
+    M, ::Val{:Facility_TotalSurfaceMassRate}, member, state, domain_params
+)
+    return (state[:Facility])[:TotalSurfaceMassRate] .= member[:Facility_TotalSurfaceMassRate]
 end
 
 function sim_to_member(::Val{:Facility_TotalSurfaceMassRate}, state, domain_params)
-    (state[:Facility])[:TotalSurfaceMassRate]
+    return (state[:Facility])[:TotalSurfaceMassRate]
 end
-
 
 function initialize_member!(M::JutulModel, member)
     state = deepcopy(M.state0)
@@ -360,9 +371,8 @@ function initialize_member!(M::JutulModel, member)
         # end
         member_to_sim!(M, Val(k), member, state, M.domain)
     end
-    sim_to_member!(M.translator, member, state, M.domain)
+    return sim_to_member!(M.translator, member, state, M.domain)
 end
-
 
 # function find_max_permeability_index(loc, search_z_range, d_3d, K)
 #     idx_2d = round.(Int, loc ./ d_3d[1:2])

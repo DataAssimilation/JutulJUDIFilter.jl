@@ -64,7 +64,9 @@ struct GaussianSampler
 end
 
 function make_sampler(seed, mesh_options::MeshOptions, prior::GaussianPriorOptions)
-    return GaussianSampler(prior.mean, prior.std, mesh_options.n, Random.MersenneTwister(seed))
+    return GaussianSampler(
+        prior.mean, prior.std, mesh_options.n, Random.MersenneTwister(seed)
+    )
 end
 
 function generate_prior_sample(sampler::GaussianSampler)
@@ -78,7 +80,7 @@ function generate_initial_ensemble(params_en)
 
     members = [Dict{Symbol,Any}() for _ in 1:ensemble_size]
 
-    for (k,opt) in pairs(prior)
+    for (k, opt) in pairs(prior)
         sampler = make_sampler(seed ⊻ hash(k), params_en.mesh, opt)
         for member in members
             member[k] = generate_prior_sample(sampler)
@@ -86,7 +88,9 @@ function generate_initial_ensemble(params_en)
     end
 
     for member in members
-        member[:Permeability] = Kto3(member[:Permeability]; kvoverkh=params_en.permeability_v_over_h)
+        member[:Permeability] = Kto3(
+            member[:Permeability]; kvoverkh=params_en.permeability_v_over_h
+        )
 
         # K_min = 500.0
         # K_minned = max.(K_min, K./mD_to_meters2)

@@ -67,87 +67,73 @@ params_transition = JutulOptions(;
     ),
 )
 
-
 # observer_options = NoisyObservationOptions(;
 #     noise_scale=1.0,
 #     keys=(:Saturation,),
 # )
 
 observer_options = SeismicCO2ObserverOptions(;
-    seismic = SeismicObserverOptions(
-        velocity = (; 
-            type = :squared_slowness,
-            field = FieldOptions(;
+    seismic=SeismicObserverOptions(;
+        velocity=(;
+            type=:squared_slowness,
+            field=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass/BGCompass_tti_625m.jld2",
-                    key="m",
-                    scale=1e-6,
-                    resize=true,
+                    file="compass/BGCompass_tti_625m.jld2", key="m", scale=1e-6, resize=true
                 ),
             ),
         ),
-        density = FieldOptions(;
+        density=FieldOptions(;
             suboptions=FieldFileOptions(;
-                file="compass/BGCompass_tti_625m.jld2",
-                key="rho",
-                scale=1e3,
-                resize=true,
+                file="compass/BGCompass_tti_625m.jld2", key="rho", scale=1e3, resize=true
             ),
         ),
-        background_velocity = BackgroundBlurOptions(;
-            cells = 10.0,
+        background_velocity=BackgroundBlurOptions(; cells=10.0),
+        background_density=BackgroundBlurOptions(; cells=10.0),
+        mesh=MeshOptions(; n=(325, 341), d=(12.5, 6.25)),
+        source_receiver_geometry=SourceReceiverGeometryOptions(;
+            nsrc=8, nrec=200, setup_type=:surface
         ),
-        background_density = BackgroundBlurOptions(;
-            cells = 10.0,
-        ),
-        mesh = MeshOptions(;
-            n = (325, 341),
-            d = (12.5, 6.25),
-        ),
-        source_receiver_geometry = SourceReceiverGeometryOptions(;
-            nsrc = 8,
-            nrec = 200,
-            setup_type = :surface,
-        ),
-        seed = 0xb874e67219a0aba4,
-        depth_scaling_exponent = 1,
+        seed=0xb874e67219a0aba4,
+        depth_scaling_exponent=1,
     ),
-    rock_physics = RockPhysicsModelOptions(
-        porosity = FieldOptions(0.25),
-    ),
+    rock_physics=RockPhysicsModelOptions(; porosity=FieldOptions(0.25)),
 )
 
 ground_truth = ModelOptions(;
     transition=params_transition,
-    observation=MultiTimeObserverOptions(; observers=(
+    observation=MultiTimeObserverOptions(;
+        observers=(
+            0yr => observer_options,
+            1yr => observer_options,
+            2yr => observer_options,
+            3yr => observer_options,
+            4yr => observer_options,
+            5yr => observer_options,
+        ),
+    ),
+)
+
+estimator_observation = MultiTimeObserverOptions(;
+    observers=(
         0yr => observer_options,
         1yr => observer_options,
         2yr => observer_options,
         3yr => observer_options,
         4yr => observer_options,
         5yr => observer_options,
-    )),
+    ),
 )
-
-estimator_observation = MultiTimeObserverOptions(; observers=(
-    0yr => observer_options,
-    1yr => observer_options,
-    2yr => observer_options,
-    3yr => observer_options,
-    4yr => observer_options,
-    5yr => observer_options,
-))
 
 params = JutulJUDIFilterOptions(;
     ground_truth,
     ensemble=EnsembleOptions(;
-        size = 10,
-        seed = 9347215,
-        mesh = params_transition.mesh,
+        size=10,
+        seed=9347215,
+        mesh=params_transition.mesh,
         permeability_v_over_h=0.36,
-        prior = (;
-            Saturation = GaussianPriorOptions(; mean=0, std=0),
-            Permeability = FieldOptions(;
+        prior=(;
+            Saturation=GaussianPriorOptions(; mean=0, std=0),
+            Permeability=FieldOptions(;
                 suboptions=FieldFileOptions(;
                     file="compass/broad&narrow_perm_models_new.jld2",
                     key="BroadK",
@@ -155,7 +141,7 @@ params = JutulJUDIFilterOptions(;
                     resize=true,
                 ),
             ),
-        )
+        ),
     ),
     estimator=EstimatorOptions(;
         transition=ground_truth.transition,
@@ -165,7 +151,7 @@ params = JutulJUDIFilterOptions(;
         algorithm=EnKFOptions(;
             noise=NoiseOptions(; std=3e15, type=:diagonal),
             include_noise_in_obs_covariance=false,
-            rho = 0,
+            rho=0,
         ),
     ),
 )

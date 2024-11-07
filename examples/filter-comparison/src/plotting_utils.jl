@@ -100,8 +100,15 @@ function add_box(grid_position; z=-100, kwargs...)
     return b
 end
 
-
-function set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale, divergent=false, default_data_range, default_colormap)
+function set_up_time_heatmap_controls(
+    fig,
+    content_size,
+    state_times;
+    fig_scale,
+    divergent=false,
+    default_data_range,
+    default_colormap,
+)
     previous_num_blocks = length(fig.content)
 
     controls_height = 4 * fig_scale
@@ -128,12 +135,7 @@ function set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale,
     end
     slider_grid = SliderGrid(
         controls_time_layout[1, 1],
-        (
-            label,
-            range=1:length(state_times),
-            format,
-            startvalue=length(state_times),
-        ),
+        (label, range=1:length(state_times), format, startvalue=length(state_times)),
     )
 
     controls_colormap_position = controls_layout[2, 1]
@@ -145,9 +147,7 @@ function set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale,
         strokecolor=:transparent,
     )
 
-    Label(
-        controls_colormap_layout[1, 1], "Colorbar"; halign=:center, valign=:center
-    )
+    Label(controls_colormap_layout[1, 1], "Colorbar"; halign=:center, valign=:center)
 
     colormap_selector = let layout = controls_colormap_layout[1, 2]
         function colormap_validator(colormap)
@@ -230,7 +230,7 @@ function set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale,
                 colorrange_min_selector.displayed_string[] = min_s_target
             end
         end
-        let 
+        let
             previous_indices = collect(colorrange_slider.selected_indices[])
             function update_idx(indices; previous_indices=previous_indices)
                 d = previous_indices[1] == indices[1]
@@ -239,7 +239,7 @@ function set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale,
                     # Second index was dragged, so update first index accordingly
                     i_ctrl = indices[2]
                     if i_ctrl <= N / 2
-                        i_ctrl = ceil(Int, N/2)
+                        i_ctrl = ceil(Int, N / 2)
                     end
                     # Map [1, N] to [-(N-1)/2, (N-1)/2], then negate and map back to [1, N].
                     i_target = N + 1 - i_ctrl
@@ -248,7 +248,7 @@ function set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale,
                     # First index was dragged, so update second index accordingly
                     i_ctrl = indices[1]
                     if i_ctrl >= N / 2
-                        i_ctrl = floor(Int, N/2)
+                        i_ctrl = floor(Int, N / 2)
                     end
                     # Map [1, N] to [-(N-1)/2, (N-1)/2], then negate and map back to [1, N].
                     i_target = N + 1 - i_ctrl
@@ -370,20 +370,8 @@ function set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale,
         end
     end
 
-    heatmap_kwargs = (;
-        colormap,
-        lowclip,
-        highclip,
-        colorscale,
-        colorrange,
-    )
-    p = (;
-        t_idx,
-        colorscale,
-        hide_controls,
-        interactive_savor,
-        controls_height,
-    )
+    heatmap_kwargs = (; colormap, lowclip, highclip, colorscale, colorrange)
+    p = (; t_idx, colorscale, hide_controls, interactive_savor, controls_height)
     return p, heatmap_kwargs
 end
 

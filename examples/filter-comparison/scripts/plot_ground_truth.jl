@@ -29,46 +29,159 @@ with_theme(theme_latexfonts()) do
     update_theme!(; fontsize=24)
 
     save_dir_root = plotsdir("ground_truth", filestem_gt, "static")
-    (; velocity, density, velocity0, density0) = read_static_seismic_params(params.ground_truth.observation.observers[1].second.seismic)
-    plot_states([0], [velocity], params.ground_truth, Val(:velocity); save_dir_root, try_interactive=false)
-    plot_states([0], [density], params.ground_truth, Val(:density); save_dir_root, try_interactive=false)
-    plot_states([0], [velocity0], params.ground_truth, Val(:velocity0); save_dir_root, try_interactive=false)
-    plot_states([0], [density0], params.ground_truth, Val(:density0); save_dir_root, try_interactive=false)
+    (; velocity, density, velocity0, density0) = read_static_seismic_params(
+        params.ground_truth.observation.observers[1].second.seismic
+    )
+    plot_states(
+        [0],
+        [velocity],
+        params.ground_truth,
+        Val(:velocity);
+        save_dir_root,
+        try_interactive=false,
+    )
+    plot_states(
+        [0],
+        [density],
+        params.ground_truth,
+        Val(:density);
+        save_dir_root,
+        try_interactive=false,
+    )
+    plot_states(
+        [0],
+        [velocity0],
+        params.ground_truth,
+        Val(:velocity0);
+        save_dir_root,
+        try_interactive=false,
+    )
+    plot_states(
+        [0],
+        [density0],
+        params.ground_truth,
+        Val(:density0);
+        save_dir_root,
+        try_interactive=false,
+    )
     if haskey(states[1], :Permeability)
-        plot_states(state_times, states, params.ground_truth, Val(:Permeability); save_dir_root, try_interactive=false)
+        plot_states(
+            state_times,
+            states,
+            params.ground_truth,
+            Val(:Permeability);
+            save_dir_root,
+            try_interactive=false,
+        )
     end
 
     save_dir_root = plotsdir("ground_truth", filestem_gt, "states")
     if haskey(states[1], :Saturation)
-        plot_states(state_times, states, params.ground_truth, Val(:Saturation); save_dir_root, try_interactive=false)
+        plot_states(
+            state_times,
+            states,
+            params.ground_truth,
+            Val(:Saturation);
+            save_dir_root,
+            try_interactive=false,
+        )
     end
 
     if haskey(states[1], :Pressure)
-        plot_states(state_times, states, params.ground_truth, Val(:Pressure); save_dir_root, try_interactive=false)
-        plot_states(state_times, states, params.ground_truth, Val(:Pressure_diff); save_dir_root, try_interactive=false)
+        plot_states(
+            state_times,
+            states,
+            params.ground_truth,
+            Val(:Pressure);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            state_times,
+            states,
+            params.ground_truth,
+            Val(:Pressure_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
     end
-
 
     save_dir_root = plotsdir("ground_truth", filestem_gt, "observations")
     if haskey(observations[1], :rtm)
-        plot_states(observation_times, observations, params.ground_truth, Val(:rtm); save_dir_root, try_interactive=false)
-        plot_states(observation_times, observations, params.ground_truth, Val(:rtm_diff); save_dir_root, try_interactive=false)
+        plot_states(
+            observation_times,
+            observations,
+            params.ground_truth,
+            Val(:rtm);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            observation_times,
+            observations,
+            params.ground_truth,
+            Val(:rtm_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
     end
 
     if haskey(observations[1], :dshot)
-        plot_states(observation_times, observations, params.ground_truth, Val(:dshot); save_dir_root, try_interactive=false)
-        plot_states(observation_times, observations, params.ground_truth, Val(:dshot_diff); save_dir_root, try_interactive=false)
+        plot_states(
+            observation_times,
+            observations,
+            params.ground_truth,
+            Val(:dshot);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            observation_times,
+            observations,
+            params.ground_truth,
+            Val(:dshot_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
     end
 
     save_dir_root = plotsdir("ground_truth", filestem_gt, "observations_clean")
     if haskey(observations_clean[1], :rtm)
-        plot_states(observation_times, observations_clean, params.ground_truth, Val(:rtm); save_dir_root, try_interactive=false)
-        plot_states(observation_times, observations_clean, params.ground_truth, Val(:rtm_diff); save_dir_root, try_interactive=false)
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:rtm);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:rtm_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
     end
 
     if haskey(observations_clean[1], :dshot)
-        plot_states(observation_times, observations_clean, params.ground_truth, Val(:dshot); save_dir_root, try_interactive=false)
-        plot_states(observation_times, observations_clean, params.ground_truth, Val(:dshot_diff); save_dir_root, try_interactive=false)
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:dshot);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:dshot_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
     end
 end
 

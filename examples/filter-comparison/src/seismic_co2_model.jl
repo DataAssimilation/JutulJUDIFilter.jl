@@ -8,7 +8,7 @@ include("options.jl")
 include("seismic_model.jl")
 include("patchy.jl")
 
-struct SeismicCO2Observer <:AbstractNoisyOperator
+struct SeismicCO2Observer <: AbstractNoisyOperator
     M::SeismicModel
     P::PatchyModel
 end
@@ -55,50 +55,67 @@ function SeismicCO2Observer(options::SeismicCO2ObserverOptions)
     return SeismicCO2Observer(M, P)
 end
 
-create_velocity_field(mesh::MeshOptions, options::FieldOptions) = create_field(mesh, options)
-create_velocity_field(mesh::MeshOptions, options) = create_velocity_field(mesh, options, Val(options.type))
+function create_velocity_field(mesh::MeshOptions, options::FieldOptions)
+    return create_field(mesh, options)
+end
+function create_velocity_field(mesh::MeshOptions, options)
+    return create_velocity_field(mesh, options, Val(options.type))
+end
 function create_velocity_field(mesh::MeshOptions, options, ::Val{:squared_slowness})
-    (1 ./ create_field(mesh, options.field)) .^ 0.5
+    return (1 ./ create_field(mesh, options.field)) .^ 0.5
 end
 
-create_background_velocity_field(velocity, mesh::MeshOptions, options::FieldOptions) = create_field(mesh, options)
-function create_background_velocity_field(velocity, mesh::MeshOptions, options::BackgroundBlurOptions)
+function create_background_velocity_field(
+    velocity, mesh::MeshOptions, options::FieldOptions
+)
+    return create_field(mesh, options)
+end
+function create_background_velocity_field(
+    velocity, mesh::MeshOptions, options::BackgroundBlurOptions
+)
     v0 = deepcopy(velocity)
     idx_wb = find_water_bottom(v0)
     rows = 1:mesh.n[end]
-    masks = [rows .> idx_wb[i] for i = 1:mesh.n[1]]
+    masks = [rows .> idx_wb[i] for i in 1:mesh.n[1]]
     mask = hcat(masks...)'
-    v0[mask] = (1f0 ./ imfilter(1f0./v0, Kernel.gaussian(options.cells)))[mask]
+    v0[mask] = (1.0f0 ./ imfilter(1.0f0 ./ v0, Kernel.gaussian(options.cells)))[mask]
     return v0
 end
 
-create_background_density_field(density, mesh::MeshOptions, options::FieldOptions) = create_field(mesh, options)
-function create_background_density_field(density, mesh::MeshOptions, options::BackgroundBlurOptions)
+function create_background_density_field(density, mesh::MeshOptions, options::FieldOptions)
+    return create_field(mesh, options)
+end
+function create_background_density_field(
+    density, mesh::MeshOptions, options::BackgroundBlurOptions
+)
     rho0 = deepcopy(density)
     idx_wb = find_water_bottom(rho0)
     rows = 1:mesh.n[end]
-    masks = [rows .> idx_wb[i] for i = 1:mesh.n[1]]
+    masks = [rows .> idx_wb[i] for i in 1:mesh.n[1]]
     mask = hcat(masks...)'
-    rho0[mask] = (1f0 ./ imfilter(1f0./rho0, Kernel.gaussian(options.cells)))[mask]
+    rho0[mask] = (1.0f0 ./ imfilter(1.0f0 ./ rho0, Kernel.gaussian(options.cells)))[mask]
     return rho0
 end
 
 function read_static_seismic_params(options::SeismicObserverOptions)
     velocity = create_velocity_field(options.mesh, options.velocity)
     density = create_field(options.mesh, options.density)
-    velocity0 = create_background_velocity_field(velocity, options.mesh, options.background_velocity)
-    density0 = create_background_density_field(density, options.mesh, options.background_density)
-    (;
-        velocity,
-        density,
-        velocity0,
-        density0,
+    velocity0 = create_background_velocity_field(
+        velocity, options.mesh, options.background_velocity
     )
+    density0 = create_background_density_field(
+        density, options.mesh, options.background_density
+    )
+    return (; velocity, density, velocity0, density0)
 end
 
 function SeismicModel(options::SeismicObserverOptions)
     (; velocity, density, velocity0, density0) = read_static_seismic_params(options)
-    SeismicModel(velocity, density, velocity0, density0;
+    return SeismicModel(
+        velocity,
+        density,
+        velocity0,
+        density0;
         options.mesh.n,
         options.mesh.d,
         dtR=options.dtR,
@@ -114,13 +131,13 @@ function SeismicModel(options::SeismicObserverOptions)
 end
 
 function get_observer(options::SeismicCO2ObserverOptions)
-    SeismicCO2Observer(options)
+    return SeismicCO2Observer(options)
 end
 
 function Ensembles.xor_seed!(M::SeismicCO2Observer, seed_mod::UInt)
-    Ensembles.xor_seed!(M.M, seed_mod)
+    return Ensembles.xor_seed!(M.M, seed_mod)
 end
 
 function Ensembles.xor_seed!(M::SeismicModel, seed_mod::UInt)
-    Random.seed!(M.rng, xor(M.seed, seed_mod))
+    return Random.seed!(M.rng, xor(M.seed, seed_mod))
 end

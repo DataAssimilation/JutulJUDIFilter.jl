@@ -2,7 +2,7 @@ using JOLI
 using JUDI
 using LinearAlgebra: norm
 using Random
-import ChainRulesCore
+using ChainRulesCore: ChainRulesCore
 
 FT = Float32
 
@@ -53,26 +53,26 @@ function InitializeUnitConverter(; time, distance, mass)
 end
 
 # JUDI uses the following base units: meters, milliseconds, and megagrams.
-const SI_to_JUDI = InitializeUnitConverter(distance = 1, time = 1e3, mass = 1e-3)
-const JUDI_to_SI = InitializeUnitConverter(distance = 1, time = 1e-3, mass = 1e3)
+const SI_to_JUDI = InitializeUnitConverter(; distance=1, time=1e3, mass=1e-3)
+const JUDI_to_SI = InitializeUnitConverter(; distance=1, time=1e-3, mass=1e3)
 
 function JUDI._worker_pool()
     return nothing
 end
 
-struct SeismicModel{A, B, C, D, E, F, G}
+struct SeismicModel{A,B,C,D,E,F,G}
     model::A
     q::B
     Tm::C
     S::G
-    vel::Union{FT, Matrix{FT}}
-    rho::Union{FT, Matrix{FT}}
-    imp::Union{FT, Matrix{FT}}
+    vel::Union{FT,Matrix{FT}}
+    rho::Union{FT,Matrix{FT}}
+    imp::Union{FT,Matrix{FT}}
     F::D
     J::E
-    vel0::Union{FT, Matrix{FT}}
-    rho0::Union{FT, Matrix{FT}}
-    imp0::Union{FT, Matrix{FT}}
+    vel0::Union{FT,Matrix{FT}}
+    rho0::Union{FT,Matrix{FT}}
+    imp0::Union{FT,Matrix{FT}}
     F0::D
     J0::E
     observation_type::Val{F}
@@ -82,11 +82,15 @@ struct SeismicModel{A, B, C, D, E, F, G}
 end
 
 function SeismicModel(vel, rho, vel0, rho0; kwargs...)
-    SeismicModel(vel, rho, vel, rho)
+    return SeismicModel(vel, rho, vel, rho)
 end
 
 # Background model is used for linearization (both forward and adjoint Jacobians).
-function SeismicModel(vel, rho, vel0, rho0;
+function SeismicModel(
+    vel,
+    rho,
+    vel0,
+    rho0;
     n,
     d,
     dtR,
@@ -96,7 +100,7 @@ function SeismicModel(vel, rho, vel0, rho0;
     snr,
     seed,
     depth_scaling_exponent,
-    observation_type = :shot,
+    observation_type=:shot,
     source_receiver_geometry,
 )
     d = FT.(d)
@@ -110,8 +114,10 @@ function SeismicModel(vel, rho, vel0, rho0;
     vel0 = FT.(vel0)
     rho0 = FT.(rho0)
 
-    idx_wb = maximum(find_water_bottom(log.(vel) .- log(vel[1,1])))
-    srcGeometry, recGeometry = build_source_receiver_geometry(n, d, dtR, timeR, idx_wb; params=source_receiver_geometry)
+    idx_wb = maximum(find_water_bottom(log.(vel) .- log(vel[1, 1])))
+    srcGeometry, recGeometry = build_source_receiver_geometry(
+        n, d, dtR, timeR, idx_wb; params=source_receiver_geometry
+    )
 
     # Set up source term.
     wavelet = ricker_wavelet(timeR, dtR, f0)
@@ -123,10 +129,10 @@ function SeismicModel(vel, rho, vel0, rho0;
     vel_judi = vel * SI_to_JUDI.velocity
     rho0_judi = rho0 * SI_to_JUDI.density
     vel0_judi = vel0 * SI_to_JUDI.velocity
-    m = (1 ./ vel_judi).^2f0
+    m = (1 ./ vel_judi) .^ 2.0f0
     model = Model(n, d, origin, m; rho=rho_judi, nb=nbl)
 
-    m0 = (1 ./ vel0_judi).^2f0
+    m0 = (1 ./ vel0_judi) .^ 2.0f0
     model0 = Model(n, d, origin, m0; rho=rho0_judi, nb=nbl)
 
     # Mute the water column and do depth scaling.
@@ -138,7 +144,7 @@ function SeismicModel(vel, rho, vel0, rho0;
     end
 
     # Set up modeling operators.
-    options = Options(IC="isic")
+    options = Options(; IC="isic")
     F = judiModeling(model, srcGeometry, recGeometry; options)
     J = judiJacobian(F, q)
 
@@ -149,7 +155,26 @@ function SeismicModel(vel, rho, vel0, rho0;
     imp0 = vel0 .* rho0
     observation_type = Val(observation_type)
     rng = Random.MersenneTwister(seed)
-    return SeismicModel(model, q, Tm, S, vel, rho, imp, F, J, vel0, rho0, imp0, F0, J0, observation_type, FT(snr), seed, rng)
+    return SeismicModel(
+        model,
+        q,
+        Tm,
+        S,
+        vel,
+        rho,
+        imp,
+        F,
+        J,
+        vel0,
+        rho0,
+        imp0,
+        F0,
+        J0,
+        observation_type,
+        FT(snr),
+        seed,
+        rng,
+    )
 end
 
 function SeismicModel(M::SeismicModel, vel, rho, vel0, rho0)
@@ -166,19 +191,38 @@ function SeismicModel(M::SeismicModel, vel, rho, vel0, rho0)
     vel0_judi = vel0 * SI_to_JUDI.velocity
     rho0_judi = rho0 * SI_to_JUDI.density
 
-    m = (1 ./ vel_judi).^2f0
-    m0 = (1 ./ vel0_judi).^2f0
+    m = (1 ./ vel_judi) .^ 2.0f0
+    m0 = (1 ./ vel0_judi) .^ 2.0f0
 
     model = Model(n, d, origin, m; rho=rho_judi, nb=nbl)
     model0 = Model(n, d, origin, m0; rho=rho0_judi, nb=nbl)
-    options = Options(IC="isic")
+    options = Options(; IC="isic")
     F = judiModeling(model, srcGeometry, recGeometry; options)
     J = judiJacobian(F, M.q)
     F0 = judiModeling(model0, srcGeometry, recGeometry; options)
     J0 = judiJacobian(F0, M.q)
     imp = vel .* rho
     imp0 = vel0 .* rho0
-    return SeismicModel(model, M.q, M.Tm, M.S, vel, rho, imp, F, J, vel0, rho0, imp0, F0, J0, M.observation_type, M.snr, M.seed, M.rng)
+    return SeismicModel(
+        model,
+        M.q,
+        M.Tm,
+        M.S,
+        vel,
+        rho,
+        imp,
+        F,
+        J,
+        vel0,
+        rho0,
+        imp0,
+        F0,
+        J0,
+        M.observation_type,
+        M.snr,
+        M.seed,
+        M.rng,
+    )
 end
 
 function (M::SeismicModel)(vel, rho; kwargs...)
@@ -200,10 +244,12 @@ function (M::SeismicModel)(vel, rho, ::Val{:born})
     return M.J0 * dimp .* conversion
 end
 
-function ChainRulesCore.rrule(::typeof(*), F::JUDI.judiPropagator, x::AbstractArray{T}) where T
+function ChainRulesCore.rrule(
+    ::typeof(*), F::JUDI.judiPropagator, x::AbstractArray{T}
+) where {T}
     """The lazy evaluation in JUDI's rrule doesn't work right, so I got rid of it."""
     ra = F.options.return_array
-    y = F*x
+    y = F * x
     postx = ra ? (dx -> reshape(dx, size(x))) : identity
     function Fback(Δy)
         dx = postx(F' * Δy)
@@ -259,42 +305,38 @@ function (M::SeismicModel)(vel, rho, ::Val{:born_shot_rtm_depth_noise})
 end
 
 function build_source_receiver_geometry(n, d, dtR, timeR, idx_wb; params)
-    (;
-        setup_type,
-        nsrc,
-        nrec,
-    ) = params
+    (; setup_type, nsrc, nrec) = params
 
     # Set up source and receiver geometries.
     if setup_type == :surface
         xrange = (d[1], (n[1] - 1) * d[1])
-        y = 0f0
-        z = 10f0
-        xsrc = range(xrange[1], stop=xrange[2], length=nsrc)
-        ysrc = range(y, stop=y, length=nsrc)
-        zsrc = range(z, stop=z, length=nsrc)
+        y = 0.0f0
+        z = 10.0f0
+        xsrc = range(xrange[1]; stop=xrange[2], length=nsrc)
+        ysrc = range(y; stop=y, length=nsrc)
+        zsrc = range(z; stop=z, length=nsrc)
         srcGeometry = Geometry(convertToCell.([xsrc, ysrc, zsrc])...; dt=dtR, t=timeR)
 
-        y = 0f0
+        y = 0.0f0
         z = (idx_wb - 1) * d[2]
-        xrec = range(xrange[1], stop=xrange[2], length=nrec)
-        yrec = range(y, stop=y, length=nrec)
-        zrec = range(z, stop=z, length=nrec)
+        xrec = range(xrange[1]; stop=xrange[2], length=nrec)
+        yrec = range(y; stop=y, length=nrec)
+        zrec = range(z; stop=z, length=nrec)
         recGeometry = Geometry(xrec, yrec, zrec; dt=dtR, t=timeR, nsrc=nsrc)
     elseif setup_type == :left_right
-        x = 0f0
-        y = 0f0
+        x = 0.0f0
+        y = 0.0f0
         zrange = (d[2], (n[2] - 1) * d[2])
-        xsrc = range(x, stop=x, length=nsrc)
-        ysrc = range(y, stop=y, length=nsrc)
-        zsrc = range(zrange[1], stop=zrange[2], length=nsrc)
+        xsrc = range(x; stop=x, length=nsrc)
+        ysrc = range(y; stop=y, length=nsrc)
+        zsrc = range(zrange[1]; stop=zrange[2], length=nsrc)
         srcGeometry = Geometry(convertToCell.([xsrc, ysrc, zsrc])...; dt=dtR, t=timeR)
 
         x = (n[1] - 1) * d[1]
-        y = 0f0
-        xrec = range(x, stop=x, length=nrec)
-        yrec = range(y, stop=y, length=nrec)
-        zrec = range(zrange[1], stop=zrange[2], length=nrec)
+        y = 0.0f0
+        xrec = range(x; stop=x, length=nrec)
+        yrec = range(y; stop=y, length=nrec)
+        zrec = range(zrange[1]; stop=zrange[2], length=nrec)
         recGeometry = Geometry(xrec, yrec, zrec; dt=dtR, t=timeR, nsrc=nsrc)
     else
         error("Unknown setup_type $(setup_type)")
@@ -309,7 +351,7 @@ function generate_noise(M::SeismicModel, ref, snr)
         v = randn(FT, size(noise_i))
         noise_i .= real.(ifft(fft(v) .* fft(source)))
     end
-    noise = noise/norm(noise) * 10f0^(-snr/20f0)
+    noise = noise / norm(noise) * 10.0f0^(-snr / 20.0f0)
     return noise
 end
 
@@ -327,6 +369,6 @@ function generate_noise(source, ref, snr)
         v = randn(FT, size(noise_i))
         noise_i .= real.(ifft(fft(v) .* fft(source)))
     end
-    noise = noise/norm(noise) * 10f0^(-snr/20f0)
+    noise = noise / norm(noise) * 10.0f0^(-snr / 20.0f0)
     return noise
 end
