@@ -101,7 +101,7 @@ function add_box(grid_position; z=-100, kwargs...)
 end
 
 
-function set_up_time_heatmap_controls(fig, content_size, state_times, params; fig_scale, divergent=false, default_data_range, default_colormap)
+function set_up_time_heatmap_controls(fig, content_size, state_times; fig_scale, divergent=false, default_data_range, default_colormap)
     previous_num_blocks = length(fig.content)
 
     controls_height = 4 * fig_scale

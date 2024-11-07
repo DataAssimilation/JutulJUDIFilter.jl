@@ -16,12 +16,51 @@ end
 end
 
 @option struct SeismicObserverOptions
+    velocity
+    density
+    mesh::MeshOptions
+    type = :born_shot_rtm_depth_noise
+    background_velocity
+    background_density
+
+    nbl = 80 # number of absorbing layers
+
+    timeR = 1800.0  # recording time (ms)
+    dtR = 4.0 # recording time sampling rate (ms)
+    f0 = 0.024 # source frequency (kHz)
+
+    source_receiver_geometry
+    depth_scaling_exponent = 1
+    snr = 8.0
+    seed::UInt64
 end
 
-@option struct WellObserverOptions
+@option struct SourceReceiverGeometryOptions
+    nsrc # num of sources
+    nrec # num of receivers
+    setup_type
+end
+
+@option struct SeismicCO2ObserverOptions
+    seismic = SeismicObserverOptions()
+    rock_physics = RockPhysicsModelOptions()
 end
 
 @option struct RockPhysicsModelOptions
+    density_CO2 = 501.9 # kg/m^3
+    density_H2O = 1053.0 # kg/m^3 Reference: https://github.com/lidongzh/FwiFlow.jl
+    bulk_min = 36.6e9  # Bulk modulus of dry rock.
+    bulk_H2O = 2.735e9 # Bulk modulus of water. Reference: https://github.com/lidongzh/FwiFlow.jl
+    bulk_CO2 = 0.125e9 # Bulk modulus of carbon dioxide. Reference: https://github.com/lidongzh/FwiFlow.jl
+    porosity
+end
+
+@option struct BackgroundBlurOptions
+    cells
+end
+
+@option struct WellObserverOptions
+    TODO = true
 end
 
 @option struct GaussianPriorOptions

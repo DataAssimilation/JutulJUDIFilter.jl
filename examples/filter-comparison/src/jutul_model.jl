@@ -362,3 +362,12 @@ function initialize_member!(M::JutulModel, member)
     end
     sim_to_member!(M.translator, member, state, M.domain)
 end
+
+
+# function find_max_permeability_index(loc, search_z_range, d_3d, K)
+#     idx_2d = round.(Int, loc ./ d_3d[1:2])
+#     search_z_idx = range(round.(Int, search_z_range ./ d_3d[3] .- (0, 1))...)
+#     z_idx = search_z_idx[1] + argmax(K[idx_2d[1], search_z_idx]) - 1
+#     idx = (idx_2d..., z_idx)
+#     return idx
+# end

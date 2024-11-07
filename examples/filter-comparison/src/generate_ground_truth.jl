@@ -28,6 +28,7 @@ using ImageTransformations: ImageTransformations
 using JLD2: JLD2
 
 include("jutul_model.jl")
+include("seismic_co2_model.jl")
 include("options.jl")
 include("observer.jl")
 
@@ -56,8 +57,10 @@ function generate_ground_truth(params)
 
         ## Generate states and observations.
         t0 = 0.0
-        states = Vector{Dict{Symbol,Any}}(undef, 1+length(observers.unique_times))
+        state_times = unique(vcat(0.0, observers.unique_times))
+        states = Vector{Dict{Symbol,Any}}(undef, length(state_times))
         observations = Vector{Dict{Symbol,Any}}(undef, length(observers.times))
+        observations_clean = Vector{Dict{Symbol,Any}}(undef, length(observers.times))
         states[1] = deepcopy(state)
         obs_idx = 1
         state_idx = 2
@@ -71,17 +74,17 @@ function generate_ground_truth(params)
             observer = get_observer(observer_options)
             xor_seed!(observer, UInt64(0xabc2fe2e546a031c) ⊻ hash(t))
             obs = observer(state)
-            observations[obs_idx] = split_clean_noisy(observer, obs)[2]
+            observations_clean[obs_idx], observations[obs_idx] = split_clean_noisy(observer, obs)
             obs_idx += 1
             t0 = t
         end
-        state_times = unique(vcat(0.0, observers.unique_times))
-        (; states, observations, state_times, observation_times=observers.times)
+        (; states, observations, observations_clean, state_times, observation_times=observers.times)
     end
     println("  ^ timing for making ground truth data")
     return data = Dict(
         "states" => ground_truth.states,
         "observations" => ground_truth.observations,
+        "observations_clean" => ground_truth.observations_clean,
         "state_times" => ground_truth.state_times,
         "observation_times" => ground_truth.observation_times,
     )
