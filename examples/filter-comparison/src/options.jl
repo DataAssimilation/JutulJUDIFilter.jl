@@ -113,6 +113,7 @@ end
     version = "v0.2"
     transition::JutulOptions
     observation::MultiTimeObserverOptions
+    max_transition_step::Union{Nothing, Float64} = nothing
 end
 
 @option struct EnsembleOptions

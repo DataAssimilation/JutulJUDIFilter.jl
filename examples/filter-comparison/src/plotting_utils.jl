@@ -64,7 +64,7 @@ function plot_heatmap_from_grid!(
     # end
 
     if make_heatmap
-        hm = heatmap!(ax, xs, ys, a; colorrange, kwargs...)
+        hm = heatmap!(ax, xs, ys, a; rasterize=true, colorrange, kwargs...)
     else
         levels = pop!(Dict(kwargs), :levels, 10)
         mode = pop!(Dict(kwargs), :normal, 10)
@@ -390,7 +390,7 @@ function show_interactive_preview(fig, controls)
         else
             println("Press enter to continue. Type c to skip saving plots.")
             r = readline(stdin)
-            controls.interactive_savor.active[] = (strip(r) == "c")
+            controls.interactive_savor.active[] = !(strip(r) == "c")
         end
     end
 end

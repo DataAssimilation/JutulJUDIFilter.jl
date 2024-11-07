@@ -53,11 +53,7 @@ function run_estimator(params)
     K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
     JMT = JutulModelTranslator(K)
 
-    options = params_estimator.transition
-    options = JutulOptions(
-        options; time=(TimeDependentOptions(options.time[1]; years=1.0, steps=1),)
-    )
-    M = JutulModel(; translator=JMT, options)
+    M = JutulModel(; translator=JMT, options=params_estimator.transition)
     observers = get_multi_time_observer(params_estimator.observation)
 
     # Initialize member for all primary variables in simulation.

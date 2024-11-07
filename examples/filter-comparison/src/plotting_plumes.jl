@@ -8,7 +8,7 @@ using Format: cfmt
 using ProgressLogging: @withprogress, @logprogress
 
 using GLMakie
-# using CairoMakie
+using CairoMakie
 using .Makie: latexstring
 
 include(srcdir("plotting_utils.jl"))
@@ -114,7 +114,7 @@ function plot_data(
         xs = @lift(1:size($data[i], 2))
         ys = times
         a = @lift($data[i]')
-        hm = heatmap!(ax, xs, ys, a; heatmap_kwargs...)
+        hm = heatmap!(ax, xs, ys, a; rasterize=true, heatmap_kwargs...)
         if grid_ci[1] == grid[2]
             # Show x label on bottom row.
             ax.xlabel = "receiver index"
@@ -152,7 +152,7 @@ function plot_data(content_layout, state, params, ::Val{:rtm}; heatmap_kwargs, k
     return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
-function plot_scalar_field(content_layout, data, params; grid_2d, heatmap_kwargs=(;))
+function plot_scalar_field(content_layout, data, params; grid_2d, heatmap_kwargs=(;), colorbar_kwargs=(;))
     heatmap_aspect = get_grid_col_aspect(grid_2d)
 
     # Plot first saturation.
@@ -163,16 +163,20 @@ function plot_scalar_field(content_layout, data, params; grid_2d, heatmap_kwargs
         ax, shaped_data, grid_2d; make_heatmap=true, heatmap_kwargs...
     )
 
-    cb = Colorbar(content_layout[1, 2], hm)
-    on(heatmap_kwargs.colorscale; priority=10) do scale
-        # There's a bug in the propagation of the scale, so when switching from log scale to linear scale,
-        # we need to set the axis scale to linear first, before it tries to compute tick values.
-        if scale == log10
-        else
-            cb.scale.val = scale
-            cb.axis.attributes.scale.val = scale
-            cb.axis.attributes.scale[] = scale
-            cb.scale[] = scale
+    if !isnothing(colorbar_kwargs)
+        cb = Colorbar(content_layout[1, 2], hm)
+        if haskey(heatmap_kwargs, :colorscale)
+            on(heatmap_kwargs.colorscale; priority=10) do scale
+                # There's a bug in the propagation of the scale, so when switching from log scale to linear scale,
+                # we need to set the axis scale to linear first, before it tries to compute tick values.
+                if scale == log10
+                else
+                    cb.scale.val = scale
+                    cb.axis.attributes.scale.val = scale
+                    cb.axis.attributes.scale[] = scale
+                    cb.scale[] = scale
+                end
+            end
         end
     end
 
@@ -315,6 +319,56 @@ function plot_states(
         @info "Plotting saturation data to $save_dir_root"
         @withprogress name = "saturation" begin
             save_dir = joinpath(save_dir_root, "saturation")
+            mkpath(save_dir)
+            for i in 1:length(states)
+                controls.t_idx[] = i
+                file_path = joinpath(save_dir, "$(cfmt("%02d", i)).png")
+                wsave(file_path, fig)
+                @logprogress i / length(states)
+            end
+        end
+    end
+end
+
+function plot_states(
+    state_times, states, params, ::Val{:Saturation_Permeability}; save_dir_root, try_interactive
+)
+    grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
+        state_times, states, params
+    )
+
+    default_data_range = extrema(
+        Iterators.flatten(extrema.(s[:Permeability] for s in states))
+    )
+
+    add_top_label(state_times, content_layout, controls.t_idx)
+    state = @lift(states[$(controls.t_idx)])
+
+    ax = plot_data(content_layout, state, params, :Permeability;
+        grid_2d,
+        heatmap_kwargs=(;colorrange = default_data_range, colormap=Reverse(:Purples)),
+        colorbar_kwargs=nothing,
+    )
+
+    data = @lift let
+        data = $state[:Saturation]
+        data_thresholded = ifelse.(abs.(data) .< 0, 0.0, data)
+        data_zeros = ifelse.(data_thresholded .<= 0, NaN, data_thresholded)
+    end
+    shaped_data = @lift(reshape($data, grid_2d.n))
+    hm = plot_heatmap_from_grid!(
+        ax, shaped_data, grid_2d; make_heatmap=true, heatmap_kwargs...
+    )
+
+    controls.interactive_savor.active[] = true
+    try_interactive && show_interactive_preview(fig, controls)
+    controls.hide_controls.active[] = true
+
+    if controls.interactive_savor.active[]
+        @info "Plotting saturation_permeability data to $save_dir_root"
+        @withprogress name = "saturation_permeability" begin
+            save_dir = joinpath(save_dir_root, "saturation_permeability")
             mkpath(save_dir)
             for i in 1:length(states)
                 controls.t_idx[] = i

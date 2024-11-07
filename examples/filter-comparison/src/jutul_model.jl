@@ -118,32 +118,6 @@ function member_to_sim!(M, T::JutulModelTranslator{K}, member, state) where {K<:
     end
 end
 
-# macro build_state_setter(member_keys)
-#     esc(quote
-#         function (state, domain_params)
-#             for k in $member_keys
-#                 set_sim_state!(Val(k), member, state, domain_params)
-#             end
-#         end
-#     end)
-# end
-
-# get_state_keys(M::JutulModel) = [:state]
-
-# function (M::JutulModel)(member::Dict, args...; kwargs...)
-#     return Dict{Symbol,Any}(:state => M(member[:state], args...; kwargs...))
-# end
-# function (M::JutulModel)(state::AbstractArray, t0, t; kwargs...)
-#     Δt = t - t0
-#     if Δt == 0
-#         return state
-#     end
-#     ministeps = ceil(Int, Δt / M.kwargs.Δt)
-#     mini_Δt = Δt / ministeps
-#     states = L63(; M.kwargs..., kwargs..., Δt=mini_Δt, N=ministeps, xyz=state)
-#     return states[:, end]
-# end
-
 mutable struct JutulModel6{K} <: AbstractOperator
     translator::JutulModelTranslator{K}
     options
@@ -209,8 +183,6 @@ function JutulModel6(; options, translator, kwargs=(;))
         boundary, domain, p0[boundary], temperatures; fractional_flow=[1.0, 0.0]
     )
     dt, forces = setup_reservoir_forces(model, options.time; bc)
-    dt = dt[1:1]
-    forces = forces[1:1]
 
     # Create a new translator from the primary vars.
     K = []
@@ -273,59 +245,44 @@ function JutulModel6(; options, translator, kwargs=(;))
     )
 end
 
-# function (M::JutulModel)(member::Dict)
-#     state0 = get_state0(member)
-#     model = get_model(M, member)
-#     parameters = get_parameters(M, member)
-#     forces = setup_forces(M)
-#     result = simulate_reservoir(
-#         state0, model, dt; parameters, forces, M.kwargs...
-#     )
-#     member_new = process_result(member, result)
-#     return member_new
-# end
+function get_dt_forces(M::JutulModel{K}, t0, t) where {K}
+    start_step = 1
+    start_time = 0
+    while start_time + M.dt[start_step] <= t0
+        start_time += M.dt[start_step]
+        start_step += 1
+    end
+    @assert sum(M.dt[1:start_step-1]) <= t0
+    @assert sum(M.dt[1:start_step]) >= t0
+    stop_step = 0
+    stop_time = 0
+    while 1e-15 <= (t - stop_time) / t
+        stop_step += 1
+        stop_time += M.dt[stop_step]
+    end
+    @assert sum(M.dt[1:stop_step]) >= t*(1-1e-15)
+    @assert sum(M.dt[1:stop_step-1]) <= t
 
-# function (M::JutulModel)()
-#     state0 = M.state0
-#     model = M.model
-#     parameters = M.parameters
-#     forces = M.forces
-#     result = simulate_reservoir(
-#         state0, model, M.dt; parameters, forces, M.kwargs...
-#     )
-#     full_final_state = result.result.states[end]
-#     full_parameters = copy(M.domain.data)
-#     modified_param_keys = [:permeability]
-#     full_parameters = Dict(k => M.domain[k] for k in modified_param_keys)
-#     return Dict(:state=>full_final_state, :parameters=>full_parameters)
-# end
-
-# function (M::JutulModel{K})(member::Dict) where K
-#     state0 = M.state0
-#     parameters = M.parameters
-#     model = M.model
-#     forces = M.forces
-
-#     member_to_sim!(M, JMT, member, M.state0, M.domain)
-#     if modifies_domain(JMT)
-#         parameters = setup_parameters(model)
-#     end
-#     result = simulate_reservoir(
-#         state0, model, M.dt; parameters, forces, M.kwargs...
-#     )
-#     final_state = result.result.states[end]
-#     sim_to_member!(JMT, member, final_state)
-#     return member
-# end
+    forces = M.forces[start_step:stop_step]
+    if start_step == stop_step
+        dt = [t - t0]
+    else
+        dt = deepcopy(M.dt[start_step:stop_step])
+        dt[1] -= t0 - sum(M.dt[1:(start_step-1)])
+        dt[end] = t - sum(M.dt[1:(stop_step-1)])
+    end
+    return dt, forces
+end
 
 function (M::JutulModel{K})(member::Dict, t0::Float64, t::Float64) where {K}
+    if t0 == t
+        return member
+    end
     state0 = M.state0
     parameters = M.parameters
     model = M.model
 
-    # TODO: forces should change based on time.
-    forces = M.forces
-    dt = Float64[t - t0]
+    dt, forces = get_dt_forces(M, t0, t)
 
     member_to_sim!(M, M.translator, member, M.state0, M.domain)
     if modifies_domain(M.translator)

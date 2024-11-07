@@ -38,6 +38,8 @@ params_transition = JutulOptions(;
         suboptions=FieldFileOptions(;
             file="compass/broad&narrow_perm_models_new.jld2",
             key="K",
+            # key="BroadK",
+            # idx=3,
             scale=mD_to_meters2,
             resize=true,
         ),
@@ -52,8 +54,7 @@ params_transition = JutulOptions(;
     injection=WellOptions(; trajectory=injection_well_trajectory, name=:Injector),
     time=(
         TimeDependentOptions(;
-            years=1.0,
-            steps=5,
+            years=5.0,
             controls=(
                 WellRateOptions(;
                     type="injector",
@@ -63,7 +64,7 @@ params_transition = JutulOptions(;
                 ),
             ),
         ),
-        # TimeDependentOptions(; years=475.0, steps=475, controls=[]),
+        # TimeDependentOptions(; years=475.0, controls=()),
     ),
 )
 
@@ -111,6 +112,7 @@ ground_truth = ModelOptions(;
             5yr => observer_options,
         ),
     ),
+    # max_transition_step = 0.1yr,
 )
 
 estimator_observation = MultiTimeObserverOptions(;

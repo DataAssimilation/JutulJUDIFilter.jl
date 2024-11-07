@@ -27,52 +27,59 @@ observation_times = data_gt["observation_times"]
 
 with_theme(theme_latexfonts()) do
     update_theme!(; fontsize=24)
+    if isinteractive()
+        GLMakie.activate!()
+    else
+        CairoMakie.activate!()
+    end
 
     save_dir_root = plotsdir("ground_truth", filestem_gt, "static")
-    (; velocity, density, velocity0, density0) = read_static_seismic_params(
-        params.ground_truth.observation.observers[1].second.seismic
-    )
-    plot_states(
-        [0],
-        [velocity],
-        params.ground_truth,
-        Val(:velocity);
-        save_dir_root,
-        try_interactive=false,
-    )
-    plot_states(
-        [0],
-        [density],
-        params.ground_truth,
-        Val(:density);
-        save_dir_root,
-        try_interactive=false,
-    )
-    plot_states(
-        [0],
-        [velocity0],
-        params.ground_truth,
-        Val(:velocity0);
-        save_dir_root,
-        try_interactive=false,
-    )
-    plot_states(
-        [0],
-        [density0],
-        params.ground_truth,
-        Val(:density0);
-        save_dir_root,
-        try_interactive=false,
-    )
-    if haskey(states[1], :Permeability)
+    if isa(params.ground_truth.observation.observers[1].second, SeismicCO2ObserverOptions)
+        (; velocity, density, velocity0, density0) = read_static_seismic_params(
+            params.ground_truth.observation.observers[1].second.seismic
+        )
         plot_states(
-            state_times,
-            states,
+            [0],
+            [velocity],
             params.ground_truth,
-            Val(:Permeability);
+            Val(:velocity);
             save_dir_root,
             try_interactive=false,
         )
+        plot_states(
+            [0],
+            [density],
+            params.ground_truth,
+            Val(:density);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            [0],
+            [velocity0],
+            params.ground_truth,
+            Val(:velocity0);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            [0],
+            [density0],
+            params.ground_truth,
+            Val(:density0);
+            save_dir_root,
+            try_interactive=false,
+        )
+        if haskey(states[1], :Permeability)
+            plot_states(
+                state_times,
+                states,
+                params.ground_truth,
+                Val(:Permeability);
+                save_dir_root,
+                try_interactive=false,
+            )
+        end
     end
 
     save_dir_root = plotsdir("ground_truth", filestem_gt, "states")
@@ -82,6 +89,17 @@ with_theme(theme_latexfonts()) do
             states,
             params.ground_truth,
             Val(:Saturation);
+            save_dir_root,
+            try_interactive=false,
+        )
+    end
+
+    if haskey(states[1], :Saturation) && haskey(states[1], :Permeability)
+        plot_states(
+            state_times,
+            states,
+            params.ground_truth,
+            Val(:Saturation_Permeability);
             save_dir_root,
             try_interactive=false,
         )

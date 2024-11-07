@@ -42,14 +42,11 @@ function generate_ground_truth(params)
     ## Set seed for ground-truth simulation.
     Random.seed!(0xabceabd47cada8f4)
 
-    options = params.transition
-    options = JutulOptions(
-        options; time=(TimeDependentOptions(options.time[1]; years=1.0, steps=1),)
-    )
-    M = JutulModel(; translator=JMT, options)
+    M = JutulModel(; translator=JMT, options=params.transition)
 
     ## Make operators.
     observers = get_multi_time_observer(params.observation)
+    max_transition_step = params.max_transition_step
 
     ground_truth = @time let
         state = Dict{Symbol,Any}()
@@ -57,28 +54,43 @@ function generate_ground_truth(params)
 
         ## Generate states and observations.
         t0 = 0.0
-        state_times = unique(vcat(0.0, observers.unique_times))
-        states = Vector{Dict{Symbol,Any}}(undef, length(state_times))
+        state_times = Float64[]
+        states = Dict{Symbol,Any}[]
         observations = Vector{Dict{Symbol,Any}}(undef, length(observers.times))
         observations_clean = Vector{Dict{Symbol,Any}}(undef, length(observers.times))
-        states[1] = deepcopy(state)
+        push!(states, deepcopy(state))
+        push!(state_times, 0.0)
         obs_idx = 1
-        state_idx = 2
-        @progress "Ground-truth" for (t, observer_options) in observers.times_observers
-            if t0 != t
-                state = M(state, t0, t)
-                states[state_idx] = deepcopy(state)
-                state_idx += 1
+        tf = observers.times[end]
+
+        @withprogress name = "Grount-truth" begin
+            @logprogress t0/tf
+            for (t, observer_options) in observers.times_observers
+                if t0 != t
+                    if !isnothing(max_transition_step)
+                        while t0 + max_transition_step < t
+                            state = M(state, t0, t0 + max_transition_step)
+                            push!(states, deepcopy(state))
+                            push!(state_times, t0)
+                            t0 += max_transition_step
+                            @logprogress t0/tf
+                        end
+                    end
+                    state = M(state, t0, t)
+                    push!(states, deepcopy(state))
+                    push!(state_times, t)
+                end
+                Random.seed!(0xabceabd47cada8f4 ⊻ hash(t))
+                observer = get_observer(observer_options)
+                xor_seed!(observer, UInt64(0xabc2fe2e546a031c) ⊻ hash(t))
+                obs = observer(state)
+                observations_clean[obs_idx], observations[obs_idx] = split_clean_noisy(
+                    observer, obs
+                )
+                obs_idx += 1
+                t0 = t
+                @logprogress t0/tf
             end
-            Random.seed!(0xabceabd47cada8f4 ⊻ hash(t))
-            observer = get_observer(observer_options)
-            xor_seed!(observer, UInt64(0xabc2fe2e546a031c) ⊻ hash(t))
-            obs = observer(state)
-            observations_clean[obs_idx], observations[obs_idx] = split_clean_noisy(
-                observer, obs
-            )
-            obs_idx += 1
-            t0 = t
         end
         (;
             states,

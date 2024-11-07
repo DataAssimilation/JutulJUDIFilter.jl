@@ -1,8 +1,13 @@
 
 using Configurations: @option
+using Ensembles: Ensembles, AbstractOperator
 
 function get_observer(options::NoisyObservationOptions)
     return NoisyObserver(collect(options.keys); params=options)
+end
+
+function get_observer(options::Nothing)
+    return NothingObserver()
 end
 
 struct MultiTimeObserver{T}
@@ -23,3 +28,15 @@ end
 function get_multi_time_observer(options::MultiTimeObserverOptions)
     return MultiTimeObserver(collect(options.observers))
 end
+
+
+function get_observer(options::Nothing)
+    return NothingObserver()
+end
+
+struct NothingObserver <: AbstractOperator
+end
+
+Ensembles.xor_seed!(::NothingObserver, seed_mod::UInt) = nothing
+(M::NothingObserver)(member::Dict{Symbol,Any}) = Dict{Symbol, Any}()
+Ensembles.split_clean_noisy(::NothingObserver, obs::Dict{Symbol,<:Any}) = (Dict{Symbol, Any}(),  Dict{Symbol, Any}())
