@@ -57,24 +57,27 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
     end
 
     Pkg.add([
-        "DrWatson",
-        "JutulDarcy",
-        "LinearAlgebra",
-        "Random",
         "CairoMakie",
+        "ChainRulesCore",
         "Configurations",
-        "Statistics",
+        "Distributed",
+        "DrWatson",
+        "Format",
         "ImageFiltering",
         "JLD2",
-        "Format",
-        "TerminalLoggers",
-        "ProgressLogging",
+        "JOLI",
+        "JUDI",
+        "JutulDarcy",
+        "LinearAlgebra",
         "Logging",
+        "Makie",
         "Markdown",
-        "Distributed",
+        "ProgressLogging",
+        "Random",
+        "Statistics",
+        "TerminalLoggers",
         "WGLMakie",
         "YAML",
-        "Makie",
     ])
 
     Pkg.instantiate()
