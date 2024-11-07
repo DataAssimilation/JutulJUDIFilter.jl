@@ -1,0 +1,202 @@
+---
+title: "Digital Twins"
+author: Grant and company
+date: last-modified
+engine: julia
+julia:
+    exeflags: ["--project=."]
+toc: true
+toc-depth: 4
+toc-expand: 2
+toc-title: Outline
+toc-location: left
+format:
+    html:
+        linkcolor: black
+        theme: cosmo
+        lightbox: true
+        crossrefs-hover: true
+        include-in-header: mathjax.html
+        code-overflow: wrap
+---
+
+# Digital twins in Julia
+
+```{julia}
+Base.active_project()
+```
+
+## Get things installed
+
+```{julia}
+include("src/install.jl")
+include("src/generate_ground_truth.jl")
+include("src/plotting_plumes.jl")
+```
+
+## Set params
+
+```{julia}
+params = include("params/tutorial-params.jl")
+filestem = "tutorial"
+```
+
+## Run ground-truth
+
+```{julia}
+params_gt = params.ground_truth
+filestem = "tutorial"
+
+params_file = datadir("ground_truth", "params", "$filestem.jld2")
+wsave(params_file; params=params_gt)
+
+params_file = datadir("ground_truth", "params", "$filestem-human.yaml")
+YAML.write_file(params_file, to_dict(params_gt, YAMLStyle))
+
+println(YAML.write(to_dict(params_gt, YAMLStyle)))
+```
+
+```{julia}
+savedir = datadir("ground_truth", "data")
+data_gt, filepath = produce_or_load(
+    generate_ground_truth,
+    params_gt,
+    savedir;
+    filename=filestem,
+    verbose=false,
+)
+states = data_gt["states"]
+observations = data_gt["observations"]
+observations_clean = data_gt["observations_clean"]
+state_times = data_gt["state_times"]
+observation_times = data_gt["observation_times"];
+```
+
+```{julia}
+@show length(states)
+@show length(state_times)
+@show keys(states[1])
+@show keys(observations[1])
+@show length(observations)
+@show length(observation_times);
+```
+
+```{julia}
+CairoMakie.activate!()
+grid_2d = get_2d_plotting_mesh(params_gt.transition.mesh)
+```
+
+```{julia}
+fig = Figure()
+data = states[1][:Permeability]
+@show size(data)
+content_layout = GridLayout(fig[1,1])
+plot_scalar_field(content_layout, Observable(data[1, :]), params_gt; grid_2d, heatmap_kwargs=(; colormap=Reverse(:Purples)))
+fig
+```
+
+
+```{julia}
+fig = Figure()
+t_idx = Observable(1)
+data = @lift(states[$t_idx][:Saturation])
+content_layout = GridLayout(fig[1,1])
+plot_scalar_field(content_layout, data, params_gt; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
+for i = 1:length(states)
+    t_idx[] = i
+    display(fig)
+end
+```
+
+
+```{julia}
+fig = Figure()
+t_idx = Observable(1)
+data = @lift(states[$t_idx][:Pressure] .- states[1][:Pressure])
+content_layout = GridLayout(fig[1,1])
+plot_scalar_field(content_layout, data, params_gt; grid_2d, heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)))
+for i = 1:length(states)
+    t_idx[] = i
+    display(fig)
+end
+```
+
+
+```{julia}
+fig = Figure()
+t_idx = Observable(1)
+data = @lift(observations[$t_idx][:rtm] .- observations[1][:rtm])
+content_layout = GridLayout(fig[1,1])
+plot_scalar_field(content_layout, data, params_gt; grid_2d, heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)))
+for i = 1:length(observations)
+    t_idx[] = i
+    display(fig)
+end
+```
+
+```{julia}
+fig = Figure()
+t_idx = Observable(1)
+function dshot_diff(state)
+    return [d .- d0 for (d0, d) in zip(observations[1][:dshot], state[:dshot])]
+end
+data = @lift(dshot_diff(observations[$t_idx]))
+content_layout = GridLayout(fig[1,1])
+timeR = @lift(params_gt.observation.observers[$t_idx].second.seismic.timeR)
+dtR = @lift(params_gt.observation.observers[$t_idx].second.seismic.dtR)
+nsrc = params_gt.observation.observers[1].second.seismic.source_receiver_geometry.nsrc
+plot_data(content_layout, data, params_gt, :dshot; heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)), nsrc, timeR, dtR)
+for i = 1:length(observations)
+    t_idx[] = i
+    display(fig)
+end
+```
+
+## Brief math review
+
+There is an unknown state $x$. We know it changes over time according to a transition operator $\mathcal{M}$.
+
+We can observe $x$ indirectly with an observation observation $y$ from observation model $\mathcal{H}$.
+
+We have a transition operator $\mathcal{M}$ and an observation operator $\mathcal{H}$.
+
+
+## Operators for geologic CO~2~ storage
+
+### CO~2~ plume physics with Jutul
+
+### Seismic wave physics with JUDI
+
+## Set up synthetic system
+
+### CO~2~ state evolution
+
+```
+states = M()
+# Plot states
+```
+
+### Seismic observations
+
+Observe a few states.
+```
+## TODO
+```
+
+## Filtering
+
+### Set up ensemble
+
+### Predict without observations
+
+### Assimilation observations
+
+### Repeat
+
+## Analyze results
+
+### Error
+
+### Uncertainty
+
+

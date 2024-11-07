@@ -78,9 +78,25 @@ function plot_data(
         end
     end
 
-    if haskey(heatmap_kwargs, :colorrange)
-        colorrange = @lift($(heatmap_kwargs[:colorrange]) ./ 1e6)
-        heatmap_kwargs = (; heatmap_kwargs..., colorrange)
+    heatmap_kwargs = Dict{Symbol, Any}(pairs(heatmap_kwargs))
+    colorrange = pop!(heatmap_kwargs, :colorrange, nothing)
+    if !isnothing(colorrange)
+        colorrange = @lift($colorrange ./ 1e6)
+    else
+        # colorrange = @lift begin
+        #     maximum(
+        #         abs.(extrema(Iterators.flatten(get_shot_extrema.(dshot_diff.(states)))))
+        #     )
+        # end
+        m1 = @lift(minimum(x -> isfinite(x) ? x : Inf, Iterators.flatten($data)))
+        m2 = @lift(maximum(x -> isfinite(x) ? x : -Inf, Iterators.flatten($data)))
+        colorrange = @lift(($m1, $m2))
+    end
+
+    fix_colorrange = pop!(heatmap_kwargs, :fix_colorrange, nothing)
+    make_divergent = pop!(heatmap_kwargs, :make_divergent, false)
+    if fix_colorrange == true || isnothing(fix_colorrange) && make_divergent
+        colorrange = @lift(get_colorrange($colorrange; make_divergent))
     end
 
     grid = if nsrc <= 4
@@ -114,7 +130,7 @@ function plot_data(
         xs = @lift(1:size($data[i], 2))
         ys = times
         a = @lift($data[i]')
-        hm = heatmap!(ax, xs, ys, a; rasterize=true, heatmap_kwargs...)
+        hm = heatmap!(ax, xs, ys, a; rasterize=true, colorrange, heatmap_kwargs...)
         if grid_ci[1] == grid[2]
             # Show x label on bottom row.
             ax.xlabel = "receiver index"

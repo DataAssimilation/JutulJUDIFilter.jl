@@ -5,7 +5,6 @@ include("../src/install.jl")
 using TerminalLoggers: TerminalLogger
 using Logging: global_logger
 isinteractive() && global_logger(TerminalLogger())
-using ProgressLogging: @withprogress, @logprogress
 
 using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave
 using CairoMakie: Label

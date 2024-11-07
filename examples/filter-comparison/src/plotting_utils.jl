@@ -36,6 +36,19 @@ function get_coordinates_cells(; dims, deltas, origin)
     return xs, ys
 end
 
+function get_colorrange(colorrange; make_divergent=false)
+    cr = collect(colorrange)
+    if cr[1] == cr[2]
+        cr[1] -= 1
+        cr[2] += 1
+    end
+    if make_divergent
+        cr[1] = min(cr[1], -cr[2])
+        cr[2] = max(-cr[1], cr[2])
+    end
+    return cr
+end
+
 function plot_heatmap_from_grid!(
     ax,
     a;
@@ -43,7 +56,7 @@ function plot_heatmap_from_grid!(
     deltas=(1, 1),
     origin=(0, 0),
     colorrange=nothing,
-    fix_colorrange=true,
+    fix_colorrange=nothing,
     make_divergent=false,
     make_heatmap=false,
     kwargs...,
@@ -59,9 +72,9 @@ function plot_heatmap_from_grid!(
         m2 = @lift(maximum(x -> isfinite(x) ? x : -Inf, $a))
         colorrange = @lift(($m1, $m2))
     end
-    # if fix_colorrange
-    #     colorrange = get_colorrange(colorrange; make_divergent)
-    # end
+    if fix_colorrange == true || isnothing(fix_colorrange) && make_divergent
+        colorrange = @lift(get_colorrange($colorrange; make_divergent))
+    end
 
     if make_heatmap
         hm = heatmap!(ax, xs, ys, a; rasterize=true, colorrange, kwargs...)

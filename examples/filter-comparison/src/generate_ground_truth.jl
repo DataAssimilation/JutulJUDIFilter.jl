@@ -3,8 +3,8 @@ include("install.jl")
 
 using TerminalLoggers: TerminalLogger
 using Logging: global_logger
-using ProgressLogging: @progress
 isinteractive() && global_logger(TerminalLogger())
+using ProgressLogging: @withprogress, @logprogress
 
 using DrWatson: wsave, datadir, produce_or_load
 using Ensembles:
