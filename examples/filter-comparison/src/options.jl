@@ -12,7 +12,7 @@ using ConfigurationsJutulDarcy: SVector
 end
 
 @option struct MultiTimeObserverOptions
-    observers::Tuple{Vararg{Pair{Float64, Any}}}
+    observers::Tuple{Vararg{Pair{Float64,Any}}}
 end
 
 @option struct SeismicObserverOptions
@@ -87,9 +87,8 @@ end
     include_noise_in_obs_covariance = false
 end
 
-get_short_name(::T) where T = string(T)
+get_short_name(::T) where {T} = string(T)
 get_short_name(::EnKFOptions) = "EnKF"
-
 
 using Ensembles: Ensembles
 function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)

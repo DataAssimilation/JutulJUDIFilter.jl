@@ -42,9 +42,7 @@ end
 function get_estimator(params_estimator::EnKFOptions)
     R = get_noise_covariance(params_estimator.noise)
     estimator = EnKF(
-        R,
-        params_estimator.include_noise_in_obs_covariance,
-        params_estimator.rho,
+        R, params_estimator.include_noise_in_obs_covariance, params_estimator.rho
     )
     return estimator
 end

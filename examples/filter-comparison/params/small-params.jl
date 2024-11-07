@@ -34,10 +34,7 @@ params_transition = JutulOptions(;
             steps=1,
             controls=(
                 WellRateOptions(;
-                    type="injector",
-                    name=:Injector,
-                    fluid_density=9e2,
-                    rate_mtons_year=1e-2,
+                    type="injector", name=:Injector, fluid_density=9e2, rate_mtons_year=1e-2
                 ),
             ),
         ),
@@ -45,21 +42,19 @@ params_transition = JutulOptions(;
     ),
 )
 
-ground_truth=ModelOptions(;
+ground_truth = ModelOptions(;
     transition=params_transition,
-    observation=NoisyObservationOptions(; timestep_size=1e-2yr, num_timesteps=5)
+    observation=NoisyObservationOptions(; timestep_size=1e-2yr, num_timesteps=5),
 )
 
 params = JutulJUDIFilterOptions(;
     ground_truth,
     ensemble=EnsembleOptions(;
-        size = 10,
-        seed = 9347215,
-        mesh = params_transition.mesh,
+        size=10,
+        seed=9347215,
+        mesh=params_transition.mesh,
         permeability_v_over_h=0.36,
-        prior = (;
-            Saturation = GaussianPriorOptions(; mean=0, std=0),
-        )
+        prior=(; Saturation=GaussianPriorOptions(; mean=0, std=0),),
     ),
     estimator=EstimatorOptions(;
         transition=ground_truth.transition,
@@ -67,7 +62,7 @@ params = JutulJUDIFilterOptions(;
         algorithm=EnKFOptions(;
             noise=NoiseOptions(; std=1, type=:diagonal),
             include_noise_in_obs_covariance=false,
-            rho = 0,
+            rho=0,
         ),
     ),
 )

@@ -4,13 +4,7 @@ using ProgressLogging: @progress
 using Ensembles: assimilate_data, split_clean_noisy
 
 function filter_loop(
-    ensemble,
-    t0,
-    estimator,
-    transitioner,
-    observers,
-    observations_gt;
-    name="Time",
+    ensemble, t0, estimator, transitioner, observers, observations_gt; name="Time"
 )
     logs = []
     ensembles = []
@@ -38,7 +32,8 @@ function filter_loop(
 
             ## Record.
             push!(
-                ensembles, (; ensemble=deepcopy(ensemble), ensemble_obs_clean, ensemble_obs_noisy, t)
+                ensembles,
+                (; ensemble=deepcopy(ensemble), ensemble_obs_clean, ensemble_obs_noisy, t),
             )
 
             if !isnothing(estimator)

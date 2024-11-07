@@ -17,14 +17,18 @@ include(srcdir("plotting_plumes.jl"))
 
 # Read data.
 params = include(params_file)
-data_ensemble, _, filestem_ensemble = produce_or_load_initial_ensemble(params; loadfile=true, force=false)
+data_ensemble, _, filestem_ensemble = produce_or_load_initial_ensemble(
+    params; loadfile=true, force=false
+)
 
 ensemble = data_ensemble["ensemble"]
 save_dir_root = plotsdir("initial_ensemble", "states", filestem_ensemble)
 
 with_theme(theme_latexfonts()) do
     update_theme!(; fontsize=30)
-    plot_states(1:length(ensemble.members), ensemble.members, params.ground_truth; save_dir_root)
+    plot_states(
+        1:length(ensemble.members), ensemble.members, params.ground_truth; save_dir_root
+    )
 end
 
 nothing

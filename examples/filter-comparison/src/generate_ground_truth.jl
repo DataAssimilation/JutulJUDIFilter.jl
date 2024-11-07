@@ -74,11 +74,19 @@ function generate_ground_truth(params)
             observer = get_observer(observer_options)
             xor_seed!(observer, UInt64(0xabc2fe2e546a031c) ⊻ hash(t))
             obs = observer(state)
-            observations_clean[obs_idx], observations[obs_idx] = split_clean_noisy(observer, obs)
+            observations_clean[obs_idx], observations[obs_idx] = split_clean_noisy(
+                observer, obs
+            )
             obs_idx += 1
             t0 = t
         end
-        (; states, observations, observations_clean, state_times, observation_times=observers.times)
+        (;
+            states,
+            observations,
+            observations_clean,
+            state_times,
+            observation_times=observers.times,
+        )
     end
     println("  ^ timing for making ground truth data")
     return data = Dict(

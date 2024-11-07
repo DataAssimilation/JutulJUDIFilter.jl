@@ -71,7 +71,7 @@ function run_estimator(params)
     append!(ensemble.state_keys, params_estimator.assimilation_keys)
 
     t0 = 0.0
-    data = filter_loop(
+    return data = filter_loop(
         ensemble,
         t0,
         estimator,
@@ -95,7 +95,7 @@ function produce_or_load_run_estimator(params; kwargs...)
     filestem = filter_stem(params)
 
     params_file = datadir("estimator", "params", "$filestem.jld2")
-    wsave(params_file, params=params_estimator)
+    wsave(params_file; params=params_estimator)
 
     params_file = datadir("estimator", "params", "$filestem-human.yaml")
     YAML.write_file(params_file, to_dict(params_estimator, YAMLStyle))

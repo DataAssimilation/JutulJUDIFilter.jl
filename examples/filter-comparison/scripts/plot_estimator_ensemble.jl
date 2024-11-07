@@ -19,7 +19,9 @@ include(srcdir("plotting_plumes.jl"))
 
 # Read data.
 params = include(params_file)
-data_ensemble, _, filestem_ensemble = produce_or_load_run_estimator(params; loadfile=true, force=false)
+data_ensemble, _, filestem_ensemble = produce_or_load_run_estimator(
+    params; loadfile=true, force=false
+)
 
 ensembles = data_ensemble["ensembles"]
 save_dir_root = plotsdir("estimator_ensemble", "states", filestem_ensemble)
@@ -30,15 +32,31 @@ with_theme(theme_latexfonts()) do
 
     ensemble_times = [e.t for e in ensembles]
     states = [mean(e.ensemble; state_keys=state_keys) for e in ensembles]
-    plot_states(ensemble_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "mean"))
+    plot_states(
+        ensemble_times,
+        states,
+        params.estimator;
+        save_dir_root=joinpath(save_dir_root, "mean"),
+    )
 
     states = [std(e.ensemble; state_keys=state_keys) for e in ensembles]
-    plot_states(ensemble_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "var"))
+    plot_states(
+        ensemble_times,
+        states,
+        params.estimator;
+        save_dir_root=joinpath(save_dir_root, "var"),
+    )
 
     ensemble_times = [e.t for e in ensembles]
-    for i = 1:min(length(ensembles[1].ensemble.members), 2)
+    for i in 1:min(length(ensembles[1].ensemble.members), 2)
         states = [e.ensemble.members[i] for e in ensembles]
-        plot_states(ensemble_times, states, params.estimator; save_dir_root=joinpath(save_dir_root, "e$i"), try_interactive=false)
+        plot_states(
+            ensemble_times,
+            states,
+            params.estimator;
+            save_dir_root=joinpath(save_dir_root, "e$i"),
+            try_interactive=false,
+        )
     end
     # for (i, ensemble_info) in enumerate(ensembles)
     #     ensemble = ensemble_info.ensemble
