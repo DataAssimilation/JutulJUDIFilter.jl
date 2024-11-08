@@ -23,17 +23,29 @@ data_ensemble, _, filestem_ensemble = produce_or_load_run_estimator(
     params; loadfile=true, force=false
 )
 
-ensembles = data_ensemble["ensembles"]
+
+state_means = data_ensemble["state_means"]
+state_stds = data_ensemble["state_stds"]
+state_times = data_ensemble["state_times"]
+observation_means = data_ensemble["observation_means"]
+observation_stds = data_ensemble["observation_stds"]
+observation_clean_means = data_ensemble["observation_clean_means"]
+observation_clean_stds = data_ensemble["observation_clean_stds"]
+observation_times = data_ensemble["observation_times"]
+observations_clean = data_ensemble["observations_clean"]
+observations = data_ensemble["observations"]
+logs = data_ensemble["logs"]
+
 save_dir_root = plotsdir("estimator_ensemble", "states", filestem_ensemble)
 with_theme(theme_latexfonts()) do
     update_theme!(; fontsize=30)
 
     state_keys = collect(keys(ensembles[1].ensemble.members[1]))
 
-    ensemble_times = [e.t for e in ensembles]
+    state_times = [e.t for e in ensembles]
     states = [mean(e.ensemble; state_keys=state_keys) for e in ensembles]
     plot_states(
-        ensemble_times,
+        state_times,
         states,
         params.estimator;
         save_dir_root=joinpath(save_dir_root, "mean"),
@@ -41,27 +53,32 @@ with_theme(theme_latexfonts()) do
 
     states = [std(e.ensemble; state_keys=state_keys) for e in ensembles]
     plot_states(
-        ensemble_times,
+        state_times,
         states,
         params.estimator;
         save_dir_root=joinpath(save_dir_root, "var"),
     )
 
-    ensemble_times = [e.t for e in ensembles]
+    state_times = [e.t for e in ensembles]
     for i in 1:min(length(ensembles[1].ensemble.members), 2)
         states = [e.ensemble.members[i] for e in ensembles]
         plot_states(
-            ensemble_times,
+            state_times,
             states,
             params.estimator;
             save_dir_root=joinpath(save_dir_root, "e$i"),
             try_interactive=false,
         )
     end
-    # for (i, ensemble_info) in enumerate(ensembles)
-    #     ensemble = ensemble_info.ensemble
-    #     plot_states(1:length(ensemble.members), ensemble.members, params.estimator; save_dir_root=joinpath(save_dir_root, string(i)))
-    # end
+
+    states = data_ensemble["states"]
+    for (i, ensemble) in enumerate(states)
+        ensemble = ensemble_info.ensemble
+        plot_states(1:length(ensemble.members), ensemble.members, params.estimator; save_dir_root=joinpath(save_dir_root, string(i)))
+        if i > 1
+            break
+        end
+    end
 end
 
 nothing

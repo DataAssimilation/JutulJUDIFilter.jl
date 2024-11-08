@@ -32,6 +32,8 @@ Base.active_project()
 include("src/install.jl")
 include("src/generate_ground_truth.jl")
 include("src/plotting_plumes.jl")
+include("src/generate_initial_ensemble.jl")
+include("src/run_estimator.jl")
 ```
 
 ## Set params
@@ -45,7 +47,7 @@ filestem = "tutorial"
 
 ```{julia}
 params_gt = params.ground_truth
-filestem = "tutorial"
+filestem = "tutorial-ground-truth"
 
 params_file = datadir("ground_truth", "params", "$filestem.jld2")
 wsave(params_file; params=params_gt)
@@ -91,7 +93,7 @@ fig = Figure()
 data = states[1][:Permeability]
 @show size(data)
 content_layout = GridLayout(fig[1,1])
-plot_scalar_field(content_layout, Observable(data[1, :]), params_gt; grid_2d, heatmap_kwargs=(; colormap=Reverse(:Purples)))
+plot_scalar_field(content_layout, Observable(data[1, :]); grid_2d, heatmap_kwargs=(; colormap=Reverse(:Purples)))
 fig
 ```
 
@@ -101,7 +103,7 @@ fig = Figure()
 t_idx = Observable(1)
 data = @lift(states[$t_idx][:Saturation])
 content_layout = GridLayout(fig[1,1])
-plot_scalar_field(content_layout, data, params_gt; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
+plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
 for i = 1:length(states)
     t_idx[] = i
     display(fig)
@@ -114,7 +116,7 @@ fig = Figure()
 t_idx = Observable(1)
 data = @lift(states[$t_idx][:Pressure] .- states[1][:Pressure])
 content_layout = GridLayout(fig[1,1])
-plot_scalar_field(content_layout, data, params_gt; grid_2d, heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)))
+plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)))
 for i = 1:length(states)
     t_idx[] = i
     display(fig)
@@ -127,7 +129,7 @@ fig = Figure()
 t_idx = Observable(1)
 data = @lift(observations[$t_idx][:rtm] .- observations[1][:rtm])
 content_layout = GridLayout(fig[1,1])
-plot_scalar_field(content_layout, data, params_gt; grid_2d, heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)))
+plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)))
 for i = 1:length(observations)
     t_idx[] = i
     display(fig)
@@ -145,11 +147,92 @@ content_layout = GridLayout(fig[1,1])
 timeR = @lift(params_gt.observation.observers[$t_idx].second.seismic.timeR)
 dtR = @lift(params_gt.observation.observers[$t_idx].second.seismic.dtR)
 nsrc = params_gt.observation.observers[1].second.seismic.source_receiver_geometry.nsrc
-plot_data(content_layout, data, params_gt, :dshot; heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)), nsrc, timeR, dtR)
+plot_data(content_layout, data, nothing, :dshot; heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)), nsrc, timeR, dtR)
 for i = 1:length(observations)
     t_idx[] = i
     display(fig)
 end
+```
+
+## Create initial ensemble.
+
+
+```{julia}
+filestem = "tutorial-initial-ensemble"
+
+params_file = datadir("initial_ensemble", "params", "$filestem.jld2")
+wsave(params_file; params=params.ensemble)
+
+params_file = datadir("initial_ensemble", "params", "$filestem-human.yaml")
+YAML.write_file(params_file, to_dict(params.ensemble, YAMLStyle))
+
+println(YAML.write(to_dict(params.ensemble, YAMLStyle)))
+```
+
+```{julia}
+savedir = datadir("initial_ensemble", "data")
+data_ensemble, filepath = produce_or_load(
+    generate_initial_ensemble,
+    params.ensemble,
+    savedir;
+    filename=filestem,
+    verbose=false,
+    loadfile=true,
+)
+ensemble = data_ensemble["ensemble"];
+```
+
+
+```{julia}
+fig = Figure()
+e_idx = Observable(1)
+data = @lift(ensemble.members[$e_idx][:Permeability][1, :])
+content_layout = GridLayout(fig[1,1])
+plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colormap=Reverse(:Purples)))
+for i = 1:min(length(ensemble.members), 3)
+    e_idx[] = i
+    display(fig)
+end
+```
+
+## Run estimator
+
+
+
+```{julia}
+filestem = "tutorial-estimator"
+
+params_file = datadir("estimator", "params", "$filestem.jld2")
+wsave(params_file; params=params.ensemble)
+
+params_file = datadir("estimator", "params", "$filestem-human.yaml")
+YAML.write_file(params_file, to_dict(params.ensemble, YAMLStyle))
+
+println(YAML.write(to_dict(params.ensemble, YAMLStyle)))
+```
+
+```{julia}
+savedir = datadir("estimator", "data")
+data_estimator, filepath = produce_or_load(
+    run_estimator,
+    params.estimator,
+    savedir;
+    filename=filestem,
+    verbose=false,
+    loadfile=true,
+)
+```
+
+```{julia}
+# fig = Figure()
+# e_idx = Observable(1)
+# data = @lift(ensemble.members[$e_idx][:Permeability][1, :])
+# content_layout = GridLayout(fig[1,1])
+# plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colormap=Reverse(:Purples)))
+# for i = 1:min(length(ensemble.members), 3)
+#     e_idx[] = i
+#     display(fig)
+# end
 ```
 
 ## Brief math review
@@ -172,8 +255,8 @@ We have a transition operator $\mathcal{M}$ and an observation operator $\mathca
 ### CO~2~ state evolution
 
 ```
-states = M()
-# Plot states
+## states = M()
+## Plot states
 ```
 
 ### Seismic observations

@@ -74,6 +74,7 @@ end
     observation::MultiTimeObserverOptions
     algorithm
     assimilation_keys::Tuple{Vararg{Symbol}}
+    max_transition_step::Union{Nothing, Float64} = nothing
 end
 
 @option struct NoiseOptions

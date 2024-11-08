@@ -64,15 +64,16 @@ function generate_ground_truth(params)
         tf = observers.times[end]
 
         @withprogress name = "Grount-truth" begin
+            cache = Dict()
             @logprogress t0/tf
             for (t, observer_options) in observers.times_observers
                 if t0 != t
                     if !isnothing(max_transition_step)
                         while t0 + max_transition_step < t
                             state = M(state, t0, t0 + max_transition_step)
+                            t0 += max_transition_step
                             push!(states, deepcopy(state))
                             push!(state_times, t0)
-                            t0 += max_transition_step
                             @logprogress t0/tf
                         end
                     end
@@ -81,7 +82,11 @@ function generate_ground_truth(params)
                     push!(state_times, t)
                 end
                 Random.seed!(0xabceabd47cada8f4 ⊻ hash(t))
-                observer = get_observer(observer_options)
+                observer = if haskey(cache, observer_options)
+                    cache[observer_options]
+                else
+                    get_observer(observer_options)
+                end
                 xor_seed!(observer, UInt64(0xabc2fe2e546a031c) ⊻ hash(t))
                 obs = observer(state)
                 observations_clean[obs_idx], observations[obs_idx] = split_clean_noisy(

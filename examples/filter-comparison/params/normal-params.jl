@@ -36,10 +36,8 @@ params_transition = JutulOptions(;
     # permeability=FieldOptions(0.1Darcy),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;
-            file="compass/broad&narrow_perm_models_new.jld2",
+            file="compass_small/perm_poro.jld2",
             key="K",
-            # key="BroadK",
-            # idx=3,
             scale=mD_to_meters2,
             resize=true,
         ),
@@ -64,7 +62,7 @@ params_transition = JutulOptions(;
                 ),
             ),
         ),
-        # TimeDependentOptions(; years=475.0, controls=()),
+        TimeDependentOptions(; years=475.0, controls=()),
     ),
 )
 
@@ -79,13 +77,13 @@ observer_options = SeismicCO2ObserverOptions(;
             type=:squared_slowness,
             field=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass/BGCompass_tti_625m.jld2", key="m", scale=1e-6, resize=true
+                    file="compass_small/BGCompass_tti_625m.jld2", key="m", scale=1e-6, resize=true
                 ),
             ),
         ),
         density=FieldOptions(;
             suboptions=FieldFileOptions(;
-                file="compass/BGCompass_tti_625m.jld2", key="rho", scale=1e3, resize=true
+                file="compass_small/BGCompass_tti_625m.jld2", key="rho", scale=1e3, resize=true
             ),
         ),
         background_velocity=BackgroundBlurOptions(; cells=10.0),
@@ -112,7 +110,7 @@ ground_truth = ModelOptions(;
             5yr => observer_options,
         ),
     ),
-    # max_transition_step = 0.1yr,
+    max_transition_step = 0.1yr,
 )
 
 estimator_observation = MultiTimeObserverOptions(;
@@ -137,8 +135,8 @@ params = JutulJUDIFilterOptions(;
             Saturation=GaussianPriorOptions(; mean=0, std=0),
             Permeability=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass/broad&narrow_perm_models_new.jld2",
-                    key="BroadK",
+                    file="compass_small/perm_poro.jld2",
+                    key="Ks",
                     scale=mD_to_meters2,
                     resize=true,
                 ),
@@ -155,5 +153,6 @@ params = JutulJUDIFilterOptions(;
             include_noise_in_obs_covariance=false,
             rho=0,
         ),
+        max_transition_step = 0.1yr,
     ),
 )

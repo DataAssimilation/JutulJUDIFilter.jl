@@ -34,10 +34,8 @@ include("observer.jl")
 include("estimator.jl")
 include("filter_loop.jl")
 
-# include(srcdir("filter.jl"))
 include(srcdir("generate_ground_truth.jl"))
 include(srcdir("generate_initial_ensemble.jl"))
-# include(srcdir("filter_loop.jl"))
 
 function run_estimator(params)
     params_estimator = params.estimator
@@ -75,6 +73,7 @@ function run_estimator(params)
         observers,
         observations_gt;
         name=get_short_name(params_estimator.algorithm),
+        max_transition_step = params_estimator.max_transition_step,
     )
 end
 

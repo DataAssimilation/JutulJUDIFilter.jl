@@ -168,7 +168,7 @@ function plot_data(content_layout, state, params, ::Val{:rtm}; heatmap_kwargs, k
     return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
-function plot_scalar_field(content_layout, data, params; grid_2d, heatmap_kwargs=(;), colorbar_kwargs=(;))
+function plot_scalar_field(content_layout, data, params=nothing; grid_2d, heatmap_kwargs=(;), colorbar_kwargs=(;))
     heatmap_aspect = get_grid_col_aspect(grid_2d)
 
     # Plot first saturation.
