@@ -2,12 +2,14 @@
 using Makie:
     Figure, Axis, Colorbar, colsize!, Aspect, resize_to_layout!, xlims!, ylims!, contourf
 
+export plot_heatmap_from_grid!
 function plot_heatmap_from_grid!(ax, a, grid; kwargs...)
     return plot_heatmap_from_grid!(
         ax, a; dims=grid.n, deltas=grid.d, origin=grid.origin, kwargs...
     )
 end
 
+export plot_heatmap_from_grid
 function plot_heatmap_from_grid(args...; make_colorbar=false, kwargs...)
     fig = Figure()
     ax = Axis(fig[1, 1]; yreversed=true)
@@ -18,24 +20,29 @@ function plot_heatmap_from_grid(args...; make_colorbar=false, kwargs...)
     return fig, ax, hm
 end
 
+export get_grid_col_aspect
 get_grid_col_aspect(grid) = get_grid_col_aspect(grid.n, grid.d)
 get_grid_col_aspect(dims, deltas) = (dims[1] * deltas[1]) / (dims[end] * deltas[end])
 
+export get_grid_row_aspect
 get_grid_row_aspect(grid) = get_grid_row_aspect(grid.n, grid.d)
 get_grid_row_aspect(dims, deltas) = (dims[end] * deltas[end]) / (dims[1] * deltas[1])
 
+export get_coordinate_corners
 function get_coordinate_corners(; dims, deltas, origin)
     xs = range(0; length=dims[1] + 1, step=deltas[1]) .- origin[1]
     ys = range(0; length=dims[end] + 1, step=deltas[end]) .- origin[end]
     return xs, ys
 end
 
+export get_coordinates_cells
 function get_coordinates_cells(; dims, deltas, origin)
     xs = deltas[1] / 2 .+ range(0; length=dims[1], step=deltas[1]) .- origin[1]
     ys = deltas[end] / 2 .+ range(0; length=dims[end], step=deltas[end]) .- origin[end]
     return xs, ys
 end
 
+export get_colorrange
 function get_colorrange(colorrange; make_divergent=false)
     cr = collect(colorrange)
     if cr[1] == cr[2]
@@ -49,6 +56,7 @@ function get_colorrange(colorrange; make_divergent=false)
     return cr
 end
 
+export plot_heatmap_from_grid
 function plot_heatmap_from_grid!(
     ax,
     a;
@@ -98,6 +106,7 @@ function plot_heatmap_from_grid!(
     return hm
 end
 
+export get_padding_layout
 function get_padding_layout(grid_position; left=5.0f0, top=5.0f0, right=5.0f0, bottom=5.0f0)
     padding_layout = GridLayout(grid_position, 3, 3)
     rowsize!(padding_layout, 1, Fixed(top))
@@ -107,12 +116,14 @@ function get_padding_layout(grid_position; left=5.0f0, top=5.0f0, right=5.0f0, b
     return GridLayout(padding_layout[2, 2])
 end
 
+export add_box
 function add_box(grid_position; z=-100, kwargs...)
     b = Box(grid_position; kwargs...)
     Makie.translate!(b.blockscene, 0, 0, z)
     return b
 end
 
+export set_up_time_heatmap_controls
 function set_up_time_heatmap_controls(
     fig,
     content_size,
@@ -388,6 +399,7 @@ function set_up_time_heatmap_controls(
     return p, heatmap_kwargs
 end
 
+export show_interactive_preview
 function show_interactive_preview(fig, controls)
     # Show interactively.
     if isinteractive()

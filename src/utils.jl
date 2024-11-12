@@ -1,3 +1,5 @@
+
+export show_interactive
 function show_interactive(fig)
     if Base.is_interactive
         display(fig)
@@ -6,6 +8,7 @@ function show_interactive(fig)
     end
 end
 
+export get_ground_truth_iterator
 function get_ground_truth_iterator(ensembles_ts, observation_times)
     gt_index = 1
     gt_indices = Int64[]

@@ -13,9 +13,12 @@ using Format: cfmt
 using JutulJUDIFilter
 using Statistics: mean, std
 
-include(srcdir("generate_initial_ensemble.jl"))
-include(srcdir("run_estimator.jl"))
-include(srcdir("plotting_plumes.jl"))
+FilterComparison = include("lib/FilterComparison.jl")
+using .FilterComparison
+
+
+include("generate_initial_ensemble.jl")
+include("run_estimator.jl")
 
 # Read data.
 params = include(params_file)

@@ -28,14 +28,15 @@ using YAML: YAML
 using ImageTransformations: ImageTransformations
 using JLD2: JLD2
 
-include("jutul_model.jl")
-include("options.jl")
-include("observer.jl")
-include("estimator.jl")
-include("filter_loop.jl")
+FilterComparison = include("lib/FilterComparison.jl")
+using .FilterComparison
 
-include(srcdir("generate_ground_truth.jl"))
-include(srcdir("generate_initial_ensemble.jl"))
+include(srcdir("jutul_model.jl"))
+include(srcdir("estimator.jl"))
+include(srcdir("filter_loop.jl"))
+
+include("generate_ground_truth.jl")
+include("generate_initial_ensemble.jl")
 
 function run_estimator(params)
     params_estimator = params.estimator
@@ -59,7 +60,7 @@ function run_estimator(params)
         initialize_member!(M, member)
     end
 
-    global estimator = get_estimator(params_estimator.algorithm)
+    estimator = get_estimator(params_estimator.algorithm)
 
     empty!(ensemble.state_keys)
     append!(ensemble.state_keys, params_estimator.assimilation_keys)

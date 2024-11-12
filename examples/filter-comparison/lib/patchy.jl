@@ -1,5 +1,6 @@
 
 # This is compatible with Zygote by not mutating array.
+export find_water_bottom_immutable
 function find_water_bottom_immutable(m::AbstractArray{avDT,N}; eps=1e-4) where {avDT,N}
     #return the indices of the water bottom of a seismic image
     wbfunc(x) = abs(x) > eps
@@ -8,7 +9,10 @@ function find_water_bottom_immutable(m::AbstractArray{avDT,N}; eps=1e-4) where {
     return idx
 end
 
+export FloatOrMat
 FloatOrMat{T} = Union{T,AbstractMatrix{<:T}}
+
+export compute_patchy_constants
 function compute_patchy_constants(
     vₚ_sat1::FloatOrMat{T},
     ρ_sat1::FloatOrMat{T},
@@ -84,6 +88,7 @@ function compute_patchy_constants(
     return M_sat1, M_sat2, idx_wb
 end
 
+export Patchy
 function Patchy(
     sat2::FloatOrMat{T},
     vₚ_sat1::FloatOrMat{T},
@@ -125,6 +130,7 @@ function Patchy(
     return vₚ_new, ρ_new
 end
 
+export PatchyModel
 struct PatchyModel
     vel
     rho

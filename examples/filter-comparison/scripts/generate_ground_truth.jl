@@ -27,10 +27,11 @@ using YAML: YAML
 using ImageTransformations: ImageTransformations
 using JLD2: JLD2
 
-include("jutul_model.jl")
-include("seismic_co2_model.jl")
-include("options.jl")
-include("observer.jl")
+FilterComparison = include("lib/FilterComparison.jl")
+using .FilterComparison
+
+include(srcdir("jutul_model.jl"))
+include(srcdir("seismic_co2_model.jl"))
 
 # Generate synthetic ground-truth observations.
 function generate_ground_truth(params)

@@ -4,9 +4,8 @@ using Ensembles: Ensembles, AbstractNoisyOperator
 using ImageFiltering: imfilter, Kernel
 using JUDI: find_water_bottom
 
-include("options.jl")
-include("seismic_model.jl")
-include("patchy.jl")
+FilterComparison = include("lib/FilterComparison.jl")
+using .FilterComparison
 
 struct SeismicCO2Observer <: AbstractNoisyOperator
     M::SeismicModel
@@ -39,11 +38,6 @@ function (S::SeismicCO2Observer)(saturation::AbstractArray)
     saturation = ifelse.(S.P.boundary_mask, 0, saturation)
     v_t, rho_t = S.P(saturation)
     return S.M(v_t, rho_t)
-end
-
-@option struct SeismicCO2ObserverOptions
-    seismic = SeismicObserverOptions()
-    rock_physics = RockPhysicsModelOptions()
 end
 
 function SeismicCO2Observer(options::SeismicCO2ObserverOptions)

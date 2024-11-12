@@ -2,6 +2,7 @@
 using Configurations: @option
 using Ensembles: Ensembles, AbstractOperator
 
+export get_observer
 function get_observer(options::NoisyObservationOptions)
     return NoisyObserver(collect(options.keys); params=options)
 end
@@ -10,6 +11,7 @@ function get_observer(options::Nothing)
     return NothingObserver()
 end
 
+export MultiTimeObserver
 struct MultiTimeObserver{T}
     times_observers::Vector{Pair{T,Any}}
     times::Vector{T}
@@ -25,6 +27,7 @@ function MultiTimeObserver(times_observers::Vector{Pair{Float64,Any}})
     return MultiTimeObserver(times_observers, times, observers, unique_times)
 end
 
+export get_multi_time_observer
 function get_multi_time_observer(options::MultiTimeObserverOptions)
     return MultiTimeObserver(collect(options.observers))
 end

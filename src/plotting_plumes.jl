@@ -1,22 +1,13 @@
 
-using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave
-# using CairoMakie: Label, @L_str, Axis, scatterlines!, ylims!, Legend
+using DrWatson: wsave
+using Makie: Label, @L_str, Axis, scatterlines!, ylims!, Legend, latexstring
 using Format: cfmt
-# using Ensembles
-# using Lorenz63Filter
-# using ImageFiltering: ImageFiltering, imfilter
 using ProgressLogging: @withprogress, @logprogress
-
-using GLMakie
-using CairoMakie
-using .Makie: latexstring
-
-include(srcdir("plotting_utils.jl"))
-include(srcdir("parula.jl"))
 
 my_year = 3600 * 24 * 365.2425
 mD_to_m2 = 9.869233e-16
 
+export plot_data
 function plot_data(content_layout, state, params, key::Symbol; kwargs...)
     return plot_data(content_layout, state, params, Val(key); kwargs...)
 end
@@ -168,6 +159,7 @@ function plot_data(content_layout, state, params, ::Val{:rtm}; heatmap_kwargs, k
     return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
+export plot_scalar_field
 function plot_scalar_field(content_layout, data, params=nothing; grid_2d, heatmap_kwargs=(;), colorbar_kwargs=(;))
     heatmap_aspect = get_grid_col_aspect(grid_2d)
 
@@ -204,11 +196,13 @@ function plot_scalar_field(content_layout, data, params=nothing; grid_2d, heatma
     return ax
 end
 
+export make_time_domain_figure_with_controls
 function make_time_domain_figure_with_controls(state_times, states, params; kwargs...)
     content_aspect = get_grid_col_aspect(params.transition.mesh)
     return make_time_figure_with_controls(state_times, states; content_aspect, kwargs...)
 end
 
+export make_time_figure_with_controls
 function make_time_figure_with_controls(
     state_times,
     states;
@@ -258,6 +252,7 @@ function make_time_figure_with_controls(
     return fig, content_layout, ctrls, heatmap_kwargs
 end
 
+export add_top_label
 function add_top_label(state_times, content_layout, t_idx)
     if eltype(state_times) == Int
         top_label = @lift(string($t_idx))
@@ -281,6 +276,7 @@ function add_top_label(state_times, content_layout, t_idx)
     end
 end
 
+export get_2d_plotting_mesh
 function get_2d_plotting_mesh(grid)
     # Get mesh parameters in kilometers.
     grid = MeshOptions(grid; d=grid.d ./ 1e3, origin=grid.origin ./ 1e3)
@@ -289,6 +285,7 @@ function get_2d_plotting_mesh(grid)
     )
 end
 
+export plot_states
 function plot_states(state_times, states, params; save_dir_root, try_interactive=false)
     @show length(states) state_times
     @assert length(states) == length(state_times)

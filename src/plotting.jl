@@ -1,4 +1,4 @@
-using CairoMakie: scatterlines!, scatterlines, @L_str
+using Makie: scatterlines!, scatterlines, @L_str
 
 export get_next_jump_idx
 export plot_disjoint_lines, plot_disjoint_lines!

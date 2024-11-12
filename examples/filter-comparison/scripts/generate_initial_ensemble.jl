@@ -28,8 +28,10 @@ using YAML: YAML
 using ImageTransformations: ImageTransformations
 using JLD2: JLD2
 
-include("jutul_model.jl")
-include("options.jl")
+FilterComparison = include("lib/FilterComparison.jl")
+using .FilterComparison
+
+include(srcdir("jutul_model.jl"))
 
 mutable struct FileSampler
     field
