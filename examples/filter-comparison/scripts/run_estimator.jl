@@ -65,7 +65,7 @@ function run_estimator(params)
     estimator = get_estimator(params_estimator.algorithm)
 
     empty!(ensemble.state_keys)
-    append!(ensemble.state_keys, params_estimator.assimilation_keys)
+    append!(ensemble.state_keys, params_estimator.assimilation_state_keys)
 
     t0 = 0.0
     return data = filter_loop(
@@ -77,6 +77,7 @@ function run_estimator(params)
         observations_gt;
         name=get_short_name(params_estimator.algorithm),
         max_transition_step = params_estimator.max_transition_step,
+        assimilation_obs_keys=params_estimator.assimilation_obs_keys,
     )
 end
 

@@ -29,14 +29,14 @@ simple_system = CO2BrineSimpleOptions(;
 )
 
 params_transition = JutulOptions(;
-    mesh=MeshOptions(; n=(100, 1, 100), d=(40, 1e2, 20)),
+    mesh=MeshOptions(; n=(75, 1, 75), d=(55, 1e2, 25)),
     # system=complex_system,
     system=simple_system,
     porosity=FieldOptions(0.25),
     # permeability=FieldOptions(0.1Darcy),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;
-            file="compass_small/perm_poro.jld2",
+            file="compass/broad&narrow_perm_models_new.jld2",
             key="K",
             scale=mD_to_meters2,
             resize=true,
@@ -77,26 +77,27 @@ observer_options = SeismicCO2ObserverOptions(;
             type=:squared_slowness,
             field=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass_small/BGCompass_tti_625m.jld2", key="m", scale=1e-6, resize=true
+                    file="compass/BGCompass_tti_625m.jld2", key="m", scale=1e-6, resize=true
                 ),
             ),
         ),
         density=FieldOptions(;
             suboptions=FieldFileOptions(;
-                file="compass_small/BGCompass_tti_625m.jld2", key="rho", scale=1e3, resize=true
+                file="compass/BGCompass_tti_625m.jld2", key="rho", scale=1e3, resize=true
             ),
         ),
         background_velocity=BackgroundBlurOptions(; cells=10.0),
         background_density=BackgroundBlurOptions(; cells=10.0),
-        mesh=MeshOptions(; n=(100, 100), d=(40, 20)),
+        mesh=MeshOptions(; n=(75, 75), d=(55, 25)),
         source_receiver_geometry=SourceReceiverGeometryOptions(;
-            nsrc=8, nrec=50, setup_type=:surface
+            nsrc=2, nrec=50, setup_type=:surface
         ),
         seed=0xb874e67219a0aba4,
         depth_scaling_exponent=1,
         snr = 20.0,
     ),
     rock_physics=RockPhysicsModelOptions(; porosity=FieldOptions(0.25)),
+    save_intermediate = true,
 )
 
 ground_truth = ModelOptions(;
@@ -107,8 +108,6 @@ ground_truth = ModelOptions(;
             1yr => observer_options,
             2yr => observer_options,
             3yr => observer_options,
-            4yr => observer_options,
-            5yr => observer_options,
         ),
     ),
     # max_transition_step = 0.1yr,
@@ -125,8 +124,8 @@ params = JutulJUDIFilterOptions(;
             Saturation=GaussianPriorOptions(; mean=0, std=0),
             Permeability=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass_small/perm_poro.jld2",
-                    key="Ks",
+                    file="compass/broad&narrow_perm_models_new.jld2",
+                    key="BroadK",
                     scale=mD_to_meters2,
                     resize=true,
                 ),
@@ -137,7 +136,8 @@ params = JutulJUDIFilterOptions(;
         transition=ground_truth.transition,
         observation=ground_truth.observation,
         # algorithm=nothing,
-        assimilation_keys=(:Saturation,),
+        assimilation_state_keys=(:Saturation,),
+        assimilation_obs_keys = (:rtm,),
         algorithm=EnKFOptions(;
             noise=NoiseOptions(; std=3e15, type=:diagonal),
             include_noise_in_obs_covariance=false,

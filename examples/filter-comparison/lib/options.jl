@@ -84,7 +84,8 @@ export EstimatorOptions
     transition::JutulOptions
     observation::MultiTimeObserverOptions
     algorithm
-    assimilation_keys::Tuple{Vararg{Symbol}}
+    assimilation_state_keys::Tuple{Vararg{Symbol}}
+    assimilation_obs_keys::Tuple{Vararg{Symbol}}
     max_transition_step::Union{Nothing, Float64} = nothing
 end
 

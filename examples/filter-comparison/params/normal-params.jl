@@ -159,7 +159,8 @@ params = JutulJUDIFilterOptions(;
         transition=ground_truth.transition,
         observation=estimator_observation,
         # algorithm=nothing,
-        assimilation_keys=(:Saturation,),
+        assimilation_state_keys=(:Saturation,),
+        assimilation_obs_keys = (:rtm,),
         algorithm=EnKFOptions(;
             noise=NoiseOptions(; std=3e15, type=:diagonal),
             include_noise_in_obs_covariance=false,

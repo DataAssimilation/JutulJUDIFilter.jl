@@ -4,7 +4,7 @@ using ProgressLogging: @withprogress, @logprogress
 using Ensembles: assimilate_data, split_clean_noisy
 
 function filter_loop(
-    ensemble, t0, estimator, transitioner, observers, observations_gt; name="Time", max_transition_step=nothing
+    ensemble, t0, estimator, transitioner, observers, observations_gt; name="Time", max_transition_step=nothing, assimilation_obs_keys=nothing
 )
     logs = []
     states = []
@@ -63,6 +63,14 @@ function filter_loop(
                 ensemble_obs_clean, ensemble_obs_noisy = split_clean_noisy(
                     observer, ensemble_obs
                 )
+
+                if !isnothing(assimilation_obs_keys)
+                    empty!(ensemble_obs_clean.state_keys)
+                    append!(ensemble_obs_clean.state_keys, assimilation_obs_keys)
+
+                    empty!(ensemble_obs_noisy.state_keys)
+                    append!(ensemble_obs_noisy.state_keys, assimilation_obs_keys)
+                end
 
                 ## Record.
                 push!(observation_means, mean(ensemble_obs))
