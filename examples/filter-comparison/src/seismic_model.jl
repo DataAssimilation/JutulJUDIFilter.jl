@@ -6,6 +6,8 @@ using ChainRulesCore: ChainRulesCore
 
 FT = Float32
 
+include("seismic_utils.jl")
+
 Base.@kwdef struct UnitConverter
     time::FT
     area::FT

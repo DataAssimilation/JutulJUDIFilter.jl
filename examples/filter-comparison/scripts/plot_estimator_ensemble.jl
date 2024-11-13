@@ -7,8 +7,14 @@ using Logging: global_logger
 isinteractive() && global_logger(TerminalLogger())
 using ProgressLogging: @withprogress, @logprogress
 
+if isinteractive()
+    using GLMakie: GLMakie
+else
+    using CairoMakie: CairoMakie
+end
+using Makie: with_theme, theme_latexfonts, update_theme!
+
 using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave, projectdir, scriptsdir
-using CairoMakie: Label
 using Format: cfmt
 using JutulJUDIFilter
 using Statistics: mean, std
@@ -26,59 +32,58 @@ data_ensemble, _, filestem_ensemble = produce_or_load_run_estimator(
 
 
 state_means = data_ensemble["state_means"]
-state_stds = data_ensemble["state_stds"]
+# state_stds = data_ensemble["state_stds"]
 state_times = data_ensemble["state_times"]
 observation_means = data_ensemble["observation_means"]
-observation_stds = data_ensemble["observation_stds"]
+# observation_stds = data_ensemble["observation_stds"]
 observation_clean_means = data_ensemble["observation_clean_means"]
-observation_clean_stds = data_ensemble["observation_clean_stds"]
+# observation_clean_stds = data_ensemble["observation_clean_stds"]
 observation_times = data_ensemble["observation_times"]
 observations_clean = data_ensemble["observations_clean"]
 observations = data_ensemble["observations"]
+states = data_ensemble["states"]
 logs = data_ensemble["logs"]
 
 save_dir_root = plotsdir("estimator_ensemble", "states", filestem_ensemble)
 with_theme(theme_latexfonts()) do
-    update_theme!(; fontsize=30)
+    update_theme!(; fontsize=24)
+    if isinteractive()
+        GLMakie.activate!()
+    else
+        CairoMakie.activate!()
+    end
 
-    state_keys = collect(keys(ensembles[1].ensemble.members[1]))
+    state_keys = collect(keys(state_means[1]))
 
-    state_times = [e.t for e in ensembles]
-    states = [mean(e.ensemble; state_keys=state_keys) for e in ensembles]
     plot_states(
         state_times,
-        states,
+        state_means,
         params.estimator;
         save_dir_root=joinpath(save_dir_root, "mean"),
     )
 
-    states = [std(e.ensemble; state_keys=state_keys) for e in ensembles]
+    state_stds = [std(ensemble; state_keys=state_keys) for ensemble in states]
     plot_states(
         state_times,
-        states,
+        state_stds,
         params.estimator;
-        save_dir_root=joinpath(save_dir_root, "var"),
+        save_dir_root=joinpath(save_dir_root, "std"),
     )
 
-    state_times = [e.t for e in ensembles]
-    for i in 1:min(length(ensembles[1].ensemble.members), 2)
-        states = [e.ensemble.members[i] for e in ensembles]
+    for i in 1:min(length(states[1].members), 2)
+        states_member_i = [e.members[i] for e in states]
         plot_states(
             state_times,
-            states,
+            states_member_i,
             params.estimator;
             save_dir_root=joinpath(save_dir_root, "e$i"),
             try_interactive=false,
         )
     end
 
-    states = data_ensemble["states"]
     for (i, ensemble) in enumerate(states)
-        ensemble = ensemble_info.ensemble
-        plot_states(1:length(ensemble.members), ensemble.members, params.estimator; save_dir_root=joinpath(save_dir_root, string(i)))
-        if i > 1
-            break
-        end
+        save_dir = joinpath(save_dir_root, "t$i")
+        plot_states(1:length(ensemble.members), ensemble.members, params.estimator; save_dir_root=save_dir)
     end
 end
 

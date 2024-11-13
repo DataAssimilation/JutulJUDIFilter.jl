@@ -23,7 +23,9 @@ function filter_loop(
     progress_name = name * ": "
     state_keys = collect(keys(ensemble.members[1]))
     @time begin
-        push!(states, (; ensemble=deepcopy(ensemble), t=t0))
+        push!(states, deepcopy(ensemble))
+        push!(state_means, mean(ensemble;  state_keys=state_keys))
+        push!(state_times, t0)
         tf = observers.times[end]
         @withprogress name = progress_name begin
             for ((t, observer_options), y_obs) in

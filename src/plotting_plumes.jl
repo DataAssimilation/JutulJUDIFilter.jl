@@ -109,7 +109,6 @@ function plot_data(
     local hm
     times = @lift(range(start=0, stop=$timeR / 1e3, step=$dtR / 1e3))
     src_range = StepRange(1, max(1, nsrc ÷ prod(grid)), nsrc)
-    @show src_range
     for (i, ci) in zip(src_range, CI)
         @info "Plotting source $i at $ci"
         grid_ci = (ci.I[2], ci.I[1])
@@ -340,7 +339,6 @@ end
 
 export plot_states
 function plot_states(state_times, states, params; save_dir_root, try_interactive=false)
-    @show length(states) state_times
     @assert length(states) == length(state_times)
 
     if haskey(states[1], :Saturation)
