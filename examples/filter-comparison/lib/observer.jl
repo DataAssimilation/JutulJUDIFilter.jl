@@ -1,10 +1,11 @@
 
 using Configurations: @option
 using Ensembles: Ensembles, AbstractOperator
+using DrWatson: projectdir
 
 export get_observer
 function get_observer(options::NoisyObservationOptions)
-    return NoisyObserver(collect(options.keys); params=options)
+    return NoisyObserverConfigurations(collect(options.keys); params=options)
 end
 
 function get_observer(options::Nothing)
@@ -30,11 +31,6 @@ end
 export get_multi_time_observer
 function get_multi_time_observer(options::MultiTimeObserverOptions)
     return MultiTimeObserver(collect(options.observers))
-end
-
-
-function get_observer(options::Nothing)
-    return NothingObserver()
 end
 
 struct NothingObserver <: AbstractOperator

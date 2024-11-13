@@ -33,8 +33,8 @@ export SeismicObserverOptions
     f0 = 0.024 # source frequency (kHz)
 
     source_receiver_geometry
-    depth_scaling_exponent = 1
-    snr = 8.0
+    depth_scaling_exponent
+    snr
     seed::UInt64
 end
 
@@ -49,6 +49,7 @@ export SeismicCO2ObserverOptions
 @option struct SeismicCO2ObserverOptions
     seismic = SeismicObserverOptions()
     rock_physics = RockPhysicsModelOptions()
+    save_intermediate = false
 end
 
 export RockPhysicsModelOptions
@@ -105,7 +106,7 @@ get_short_name(::T) where {T} = string(T)
 get_short_name(::EnKFOptions) = "EnKF"
 
 using Ensembles: Ensembles
-function Ensembles.NoisyObserver(op::Ensembles.AbstractOperator; params)
+function NoisyObserverConfigurations(op::Ensembles.AbstractOperator; params)
     noise_scale = params.noise_scale
     seed = params.seed
     rng = Random.MersenneTwister(seed)
@@ -148,3 +149,4 @@ export JutulJUDIFilterOptions
     ensemble::EnsembleOptions
     estimator::EstimatorOptions
 end
+

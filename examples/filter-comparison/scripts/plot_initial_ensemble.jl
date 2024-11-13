@@ -1,21 +1,19 @@
 
 params_file = abspath(ARGS[1])
-include("../src/install.jl")
+include("install.jl")
 
 using TerminalLoggers: TerminalLogger
 using Logging: global_logger
 isinteractive() && global_logger(TerminalLogger())
 using ProgressLogging: @withprogress, @logprogress
 
-using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave
+using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave, projectdir, scriptsdir
 using CairoMakie: Label
 using Format: cfmt
 using JutulJUDIFilter
 
-FilterComparison = include("lib/FilterComparison.jl")
-using .FilterComparison
-
-include("generate_initial_ensemble.jl")
+using FilterComparison
+include(scriptsdir("generate_initial_ensemble.jl"))
 
 # Read data.
 params = include(params_file)

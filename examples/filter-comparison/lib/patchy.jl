@@ -144,8 +144,8 @@ function PatchyModel(vel, rho, phi, patchy_params, mesh_params; idx_wb=-1)
     d = Tuple(Float32.(mesh_params.d))
     bulk_H2O = Float32(patchy_params.bulk_H2O)
     bulk_CO2 = Float32(patchy_params.bulk_CO2)
-    ρCO2 = Float32(patchy_params.density_CO2)
     ρH2O = Float32(patchy_params.density_H2O)
+    ρCO2 = Float32(patchy_params.density_CO2)
 
     patchy_constant_kwargs = (; B_fl1=bulk_H2O, ρ_fl1=ρH2O, B_fl2=bulk_CO2, ρ_fl2=ρCO2)
     M_sat1, M_sat2, idx_wb1 = compute_patchy_constants(

@@ -1,3 +1,6 @@
+if abspath(PROGRAM_FILE) == @__FILE__
+    params_file = abspath(ARGS[1])
+end
 
 include("install.jl")
 
@@ -6,11 +9,10 @@ using Logging: global_logger
 using ProgressLogging: @progress
 isinteractive() && global_logger(TerminalLogger())
 
-using DrWatson: wsave, datadir, produce_or_load
+using DrWatson: wsave, datadir, produce_or_load, projectdir, srcdir
 using Ensembles:
     Ensembles,
     Ensemble,
-    NoisyObserver,
     get_state_keys,
     get_ensemble_matrix,
     split_clean_noisy,
@@ -28,8 +30,7 @@ using YAML: YAML
 using ImageTransformations: ImageTransformations
 using JLD2: JLD2
 
-FilterComparison = include("lib/FilterComparison.jl")
-using .FilterComparison
+using FilterComparison
 
 include(srcdir("jutul_model.jl"))
 

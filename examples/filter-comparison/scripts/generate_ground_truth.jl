@@ -1,3 +1,6 @@
+if abspath(PROGRAM_FILE) == @__FILE__
+    params_file = abspath(ARGS[1])
+end
 
 include("install.jl")
 
@@ -6,10 +9,9 @@ using Logging: global_logger
 isinteractive() && global_logger(TerminalLogger())
 using ProgressLogging: @withprogress, @logprogress
 
-using DrWatson: wsave, datadir, produce_or_load
+using DrWatson: wsave, datadir, produce_or_load, projectdir, srcdir
 using Ensembles:
     Ensembles,
-    NoisyObserver,
     get_state_keys,
     get_ensemble_matrix,
     split_clean_noisy,
@@ -27,8 +29,7 @@ using YAML: YAML
 using ImageTransformations: ImageTransformations
 using JLD2: JLD2
 
-FilterComparison = include("lib/FilterComparison.jl")
-using .FilterComparison
+using FilterComparison
 
 include(srcdir("jutul_model.jl"))
 include(srcdir("seismic_co2_model.jl"))
@@ -64,7 +65,7 @@ function generate_ground_truth(params)
         obs_idx = 1
         tf = observers.times[end]
 
-        @withprogress name = "Grount-truth" begin
+        @withprogress name = "Ground-truth" begin
             cache = Dict()
             @logprogress t0/tf
             for (t, observer_options) in observers.times_observers
@@ -84,6 +85,7 @@ function generate_ground_truth(params)
                 end
                 Random.seed!(0xabceabd47cada8f4 ⊻ hash(t))
                 observer = if haskey(cache, observer_options)
+                    println("Cache success at time $(t)!")
                     cache[observer_options]
                 else
                     get_observer(observer_options)

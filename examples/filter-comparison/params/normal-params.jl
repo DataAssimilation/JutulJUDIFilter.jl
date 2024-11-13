@@ -6,7 +6,7 @@ using ConfigurationsJutulDarcy: SVector
 using JutulDarcy.Jutul
 
 using DrWatson
-include(srcdir("options.jl"))
+using FilterComparison
 
 Darcy, bar, kg, meter, day, yr = si_units(:darcy, :bar, :kilogram, :meter, :day, :year)
 mD_to_meters2 = 1e-3 * Darcy
@@ -94,8 +94,17 @@ observer_options = SeismicCO2ObserverOptions(;
         ),
         seed=0xb874e67219a0aba4,
         depth_scaling_exponent=1,
+        snr = 8.0,
     ),
-    rock_physics=RockPhysicsModelOptions(; porosity=FieldOptions(0.25)),
+    rock_physics=RockPhysicsModelOptions(;
+        porosity=FieldOptions(0.25),
+        density_CO2 = 501.9,
+        density_H2O = 1053.0,
+        bulk_min = 36.6e9,
+        bulk_H2O = 2.735e9,
+        bulk_CO2 = 0.125e9,
+    ),
+    save_intermediate = true,
 )
 
 ground_truth = ModelOptions(;

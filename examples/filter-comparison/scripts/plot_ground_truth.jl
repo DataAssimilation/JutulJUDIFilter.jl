@@ -1,19 +1,24 @@
 
 params_file = abspath(ARGS[1])
-include("../src/install.jl")
+include("install.jl")
 
 using TerminalLoggers: TerminalLogger
 using Logging: global_logger
 isinteractive() && global_logger(TerminalLogger())
 
-using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave
-using CairoMakie: Label
-using Format: cfmt
+if isinteractive()
+    using GLMakie: GLMakie
+else
+    using CairoMakie: CairoMakie
+end
+using Makie: with_theme, theme_latexfonts, update_theme!
+
+using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave, scriptsdir, projectdir
 using JutulJUDIFilter
 
-FilterComparison = include("lib/FilterComparison.jl")
-using .FilterComparison
-include("generate_ground_truth.jl")
+using FilterComparison
+include(scriptsdir("generate_ground_truth.jl"))
+include(srcdir("seismic_utils.jl"))
 
 # Read data.
 params = include(params_file)
@@ -35,9 +40,23 @@ with_theme(theme_latexfonts()) do
 
     save_dir_root = plotsdir("ground_truth", filestem_gt, "static")
     if isa(params.ground_truth.observation.observers[1].second, SeismicCO2ObserverOptions)
-        (; velocity, density, velocity0, density0) = read_static_seismic_params(
-            params.ground_truth.observation.observers[1].second.seismic
+        params_seismic = params.ground_truth.observation.observers[1].second.seismic
+        (; velocity, density, velocity0, density0) = read_static_seismic_params(params_seismic)
+
+        n = params_seismic.mesh.n
+        d = params_seismic.mesh.d
+        idx_wb = maximum(find_water_bottom_immutable(log.(velocity) .- log(velocity[1, 1])))
+        idx_unconformity = find_water_bottom_immutable((velocity .- 3500f0) .* (velocity .≥ 3500f0))
+        src_positions, rec_positions = build_source_receiver_geometry(n, d, idx_wb; params=params_seismic.source_receiver_geometry)
+        @show src_positions
+        @show rec_positions
+        plot_points_of_interest(params.ground_truth, src_positions, rec_positions;
+            idx_wb,
+            idx_unconformity,
+            save_dir_root,
+            try_interactive=false,
         )
+
         plot_states(
             [0],
             [velocity],
@@ -46,6 +65,7 @@ with_theme(theme_latexfonts()) do
             save_dir_root,
             try_interactive=false,
         )
+
         plot_states(
             [0],
             [density],
@@ -197,6 +217,71 @@ with_theme(theme_latexfonts()) do
             observations_clean,
             params.ground_truth,
             Val(:dshot_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
+    end
+
+    if haskey(observations_clean[1], :density)
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:density);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:density_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
+    end
+
+    if haskey(observations_clean[1], :velocity)
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:velocity);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:velocity_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
+    end
+
+    if haskey(observations_clean[1], :density) && haskey(observations_clean[1], :velocity)
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:impedance);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:impedance_diff);
+            save_dir_root,
+            try_interactive=false,
+        )
+        plot_states(
+            observation_times,
+            observations_clean,
+            params.ground_truth,
+            Val(:impedance_reldiff);
             save_dir_root,
             try_interactive=false,
         )

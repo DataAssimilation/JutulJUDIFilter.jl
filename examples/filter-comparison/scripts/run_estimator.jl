@@ -1,3 +1,7 @@
+if abspath(PROGRAM_FILE) == @__FILE__
+    params_file = abspath(ARGS[1])
+end
+
 include("install.jl")
 
 using TerminalLoggers: TerminalLogger
@@ -5,11 +9,10 @@ using Logging: global_logger
 using ProgressLogging: @progress
 isinteractive() && global_logger(TerminalLogger())
 
-using DrWatson: wsave, datadir, produce_or_load, srcdir
+using DrWatson: wsave, datadir, produce_or_load, srcdir, projectdir, scriptsdir
 using Ensembles:
     Ensembles,
     Ensemble,
-    NoisyObserver,
     get_state_keys,
     get_ensemble_matrix,
     split_clean_noisy,
@@ -28,15 +31,14 @@ using YAML: YAML
 using ImageTransformations: ImageTransformations
 using JLD2: JLD2
 
-FilterComparison = include("lib/FilterComparison.jl")
-using .FilterComparison
+using FilterComparison
 
 include(srcdir("jutul_model.jl"))
 include(srcdir("estimator.jl"))
 include(srcdir("filter_loop.jl"))
 
-include("generate_ground_truth.jl")
-include("generate_initial_ensemble.jl")
+include(scriptsdir("generate_ground_truth.jl"))
+include(scriptsdir("generate_initial_ensemble.jl"))
 
 function run_estimator(params)
     params_estimator = params.estimator
@@ -111,7 +113,6 @@ function produce_or_load_run_estimator(params; kwargs...)
 end
 
 if abspath(PROGRAM_FILE) == @__FILE__
-    params_file = abspath(ARGS[1])
     params = include(params_file)
     produce_or_load_run_estimator(params)
 end

@@ -137,7 +137,7 @@ function SeismicModel(
 
     # Mute the water column and do depth scaling.
     Tm = judiTopmute(n, idx_wb, 1)
-    if depth_scaling_exponent == 1
+    if depth_scaling_exponent == 0
         S = 1
     else
         S = judiDepthScaling(model; K=depth_scaling_exponent)
@@ -305,42 +305,13 @@ function (M::SeismicModel)(vel, rho, ::Val{:born_shot_rtm_depth_noise})
 end
 
 function build_source_receiver_geometry(n, d, dtR, timeR, idx_wb; params)
-    (; setup_type, nsrc, nrec) = params
+    src_positions, rec_positions = build_source_receiver_geometry(n, d, idx_wb; params)
+    (; nsrc, nrec) = params
 
-    # Set up source and receiver geometries.
-    if setup_type == :surface
-        xrange = (d[1], (n[1] - 1) * d[1])
-        y = 0.0f0
-        z = 10.0f0
-        xsrc = range(xrange[1]; stop=xrange[2], length=nsrc)
-        ysrc = range(y; stop=y, length=nsrc)
-        zsrc = range(z; stop=z, length=nsrc)
-        srcGeometry = Geometry(convertToCell.([xsrc, ysrc, zsrc])...; dt=dtR, t=timeR)
-
-        y = 0.0f0
-        z = (idx_wb - 1) * d[2]
-        xrec = range(xrange[1]; stop=xrange[2], length=nrec)
-        yrec = range(y; stop=y, length=nrec)
-        zrec = range(z; stop=z, length=nrec)
-        recGeometry = Geometry(xrec, yrec, zrec; dt=dtR, t=timeR, nsrc=nsrc)
-    elseif setup_type == :left_right
-        x = 0.0f0
-        y = 0.0f0
-        zrange = (d[2], (n[2] - 1) * d[2])
-        xsrc = range(x; stop=x, length=nsrc)
-        ysrc = range(y; stop=y, length=nsrc)
-        zsrc = range(zrange[1]; stop=zrange[2], length=nsrc)
-        srcGeometry = Geometry(convertToCell.([xsrc, ysrc, zsrc])...; dt=dtR, t=timeR)
-
-        x = (n[1] - 1) * d[1]
-        y = 0.0f0
-        xrec = range(x; stop=x, length=nrec)
-        yrec = range(y; stop=y, length=nrec)
-        zrec = range(zrange[1]; stop=zrange[2], length=nrec)
-        recGeometry = Geometry(xrec, yrec, zrec; dt=dtR, t=timeR, nsrc=nsrc)
-    else
-        error("Unknown setup_type $(setup_type)")
-    end
+    # srcGeometry = Geometry(convertToCell.([xsrc, ysrc, zsrc])...; dt=dtR, t=timeR)
+    # recGeometry = Geometry(xrec, yrec, zrec; dt=dtR, t=timeR, nsrc=nsrc)
+    srcGeometry = Geometry(convertToCell.(src_positions)...; dt=dtR, t=timeR)
+    recGeometry = Geometry(rec_positions...; dt=dtR, t=timeR, nsrc=nsrc)
     return srcGeometry, recGeometry
 end
 

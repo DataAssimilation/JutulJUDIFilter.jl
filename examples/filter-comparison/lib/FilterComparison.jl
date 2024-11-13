@@ -1,7 +1,5 @@
 module FilterComparison
-
-include("observer.jl")
 include("options.jl")
+include("observer.jl")
 include("patchy.jl")
-
 end

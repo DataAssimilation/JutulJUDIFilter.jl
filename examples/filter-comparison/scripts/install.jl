@@ -10,6 +10,16 @@ macro codegen_copy_constructor(T)
     )
 end
 
+if isinteractive()
+    using Pkg: Pkg
+    try
+        using Revise
+    catch
+        using Revise
+        Pkg.add("Revise")
+    end
+end
+
 if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
     basename(dirname(Base.active_project())) in ["v1.11", "v1.10"]
     using Pkg: Pkg
@@ -81,9 +91,9 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
     ])
 
     Pkg.instantiate()
+end
 
-    using ConfigurationsJutulDarcy
-
-    @codegen_copy_constructor ConfigurationsJutulDarcy.JutulOptions
-    @codegen_copy_constructor ConfigurationsJutulDarcy.TimeDependentOptions
+using DrWatson: projectdir
+if ! (projectdir("lib") in LOAD_PATH)
+    push!(LOAD_PATH, projectdir("lib"))
 end

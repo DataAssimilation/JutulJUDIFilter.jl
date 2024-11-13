@@ -3,16 +3,17 @@ using Configurations: @option
 using Ensembles: Ensembles, AbstractNoisyOperator
 using ImageFiltering: imfilter, Kernel
 using JUDI: find_water_bottom
+using DrWatson: projectdir
 
-FilterComparison = include("lib/FilterComparison.jl")
-using .FilterComparison
+using FilterComparison
+include("seismic_model.jl")
 
-struct SeismicCO2Observer <: AbstractNoisyOperator
+struct SeismicCO2Observer{I} <: AbstractNoisyOperator
     M::SeismicModel
     P::PatchyModel
 end
 
-function (S::SeismicCO2Observer)(member::Dict)
+function (S::SeismicCO2Observer{false})(member::Dict)
     dshot, rtm, dshot_noisy, rtm_noisy = S(member[:Saturation])
     obs = Dict(
         :dshot => deepcopy(dshot.data),
@@ -23,7 +24,20 @@ function (S::SeismicCO2Observer)(member::Dict)
     return obs
 end
 
-function Ensembles.split_clean_noisy(M::SeismicCO2Observer, obs::Dict{Symbol,<:Any})
+function (S::SeismicCO2Observer{true})(member::Dict)
+    (dshot, rtm, dshot_noisy, rtm_noisy), velocity, density = S(member[:Saturation])
+    obs = Dict(
+        :dshot => deepcopy(dshot.data),
+        :rtm => deepcopy(rtm),
+        :dshot_noisy => deepcopy(dshot_noisy.data),
+        :rtm_noisy => deepcopy(rtm_noisy),
+        :velocity => deepcopy(velocity),
+        :density => deepcopy(density),
+    )
+    return obs
+end
+
+function Ensembles.split_clean_noisy(M::SeismicCO2Observer{false}, obs::Dict{Symbol,<:Any})
     obs_clean = typeof(obs)()
     obs_noisy = typeof(obs)()
     for key in (:dshot, :rtm)
@@ -33,11 +47,32 @@ function Ensembles.split_clean_noisy(M::SeismicCO2Observer, obs::Dict{Symbol,<:A
     return obs_clean, obs_noisy
 end
 
-function (S::SeismicCO2Observer)(saturation::AbstractArray)
+function Ensembles.split_clean_noisy(M::SeismicCO2Observer{true}, obs::Dict{Symbol,<:Any})
+    obs_clean = typeof(obs)(
+        :velocity => obs[:velocity],
+        :density => obs[:density],
+    )
+    obs_noisy = typeof(obs)()
+    for key in (:dshot, :rtm)
+        obs_clean[key] = obs[key]
+        obs_noisy[key] = obs[Symbol(key, :_noisy)]
+    end
+    return obs_clean, obs_noisy
+end
+
+function (S::SeismicCO2Observer{false})(saturation::AbstractArray)
     saturation = reshape(saturation, size(S.M.model))
     saturation = ifelse.(S.P.boundary_mask, 0, saturation)
     v_t, rho_t = S.P(saturation)
     return S.M(v_t, rho_t)
+end
+
+function (S::SeismicCO2Observer{true})(saturation::AbstractArray)
+    saturation = reshape(saturation, size(S.M.model))
+    saturation = ifelse.(S.P.boundary_mask, 0, saturation)
+    v_t, rho_t = S.P(saturation)
+    obs = S.M(v_t, rho_t)
+    return obs, v_t, rho_t
 end
 
 function SeismicCO2Observer(options::SeismicCO2ObserverOptions)
@@ -46,7 +81,7 @@ function SeismicCO2Observer(options::SeismicCO2ObserverOptions)
     porosity = Float32.(porosity)
     # Patchy model uses true velocity and density.
     P = PatchyModel(M.vel, M.rho, porosity, options.rock_physics, options.seismic.mesh)
-    return SeismicCO2Observer(M, P)
+    return SeismicCO2Observer{options.save_intermediate}(M, P)
 end
 
 function create_velocity_field(mesh::MeshOptions, options::FieldOptions)
