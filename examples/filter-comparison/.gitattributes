@@ -1,0 +1,2 @@
+compass_small/ filter=lfs diff=lfs merge=lfs -text
+compass_small/* filter=lfs diff=lfs merge=lfs -text
