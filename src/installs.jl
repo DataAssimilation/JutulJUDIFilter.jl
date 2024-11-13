@@ -2,7 +2,12 @@
 using Pkg: Pkg, PackageSpec
 _dependencies = Dict{Symbol,Any}()
 _dependencies[:ConfigurationsJutulDarcy] =
-    () -> Pkg.add(PackageSpec(url="https://github.com/DataAssimilation/ConfigurationsJutulDarcy.jl", rev="gbruer/set-more-params"))
+    () -> Pkg.add(
+        PackageSpec(;
+            url="https://github.com/DataAssimilation/ConfigurationsJutulDarcy.jl",
+            rev="gbruer/set-more-params",
+        ),
+    )
 _dependencies[:ConfigurationsJUDI] =
     () -> Pkg.add(; url="https://github.com/tmp398243/tmp3117499")
 _dependencies[:Ensembles] =
