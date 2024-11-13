@@ -1,17 +1,13 @@
 
-"""
-This module provides the [`greeting`](@ref) function for generating greetings.
-
-# Examples
-
-```jldoctest
-julia> greeting("Grant")
-"Hello Grant"
-
-```
-"""
 module JutulJUDIFilter
 
-include("pkg_stuff.jl")
+include("plotting.jl")
+include("utils.jl")
+include("metrics.jl")
+include("installs.jl")
+
+include("parula.jl")
+include("plotting_utils.jl")
+include("plotting_plumes.jl")
 
 end # module JutulJUDIFilter

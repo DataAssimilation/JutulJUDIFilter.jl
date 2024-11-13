@@ -4,7 +4,7 @@ CurrentModule = JutulJUDIFilter
 
 # JutulJUDIFilter
 
-Documentation for [JutulJUDIFilter](https://github.com/tmp398243/tmp335274).
+Documentation for [JutulJUDIFilter](https://github.com/DataAssimilation/JutulJUDIFilter.jl).
 
 
 ```@index
