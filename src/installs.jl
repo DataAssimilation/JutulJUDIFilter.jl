@@ -5,7 +5,7 @@ _dependencies[:ConfigurationsJutulDarcy] =
     () -> Pkg.add(
         PackageSpec(;
             url="https://github.com/DataAssimilation/ConfigurationsJutulDarcy.jl",
-            rev="gbruer/set-more-params",
+            rev="main",
         ),
     )
 _dependencies[:ConfigurationsJUDI] =
