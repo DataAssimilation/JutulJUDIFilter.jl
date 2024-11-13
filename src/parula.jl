@@ -1,7 +1,7 @@
 # https://github.com/RobBlackwell/Parula.jl
 
-using ColorTypes
-using ColorSchemes
+using ColorTypes: RGB
+using ColorSchemes: ColorScheme
 
 export parula
 const parula = ColorScheme(

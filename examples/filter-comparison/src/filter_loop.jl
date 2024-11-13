@@ -3,6 +3,8 @@ using Random: Random
 using ProgressLogging: @withprogress, @logprogress
 using Ensembles: assimilate_data, split_clean_noisy
 
+using FilterComparison
+
 function filter_loop(
     ensemble,
     t0,

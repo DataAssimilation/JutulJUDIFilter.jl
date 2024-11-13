@@ -1,4 +1,3 @@
-using JOLI
 using JUDI
 using LinearAlgebra: norm
 using Random

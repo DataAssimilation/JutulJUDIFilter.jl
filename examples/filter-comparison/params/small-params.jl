@@ -1,12 +1,14 @@
 # Define parameters.
 
+include("../scripts/install.jl")
+
 using ConfigurationsJutulDarcy
 using ConfigurationsJutulDarcy: @option
 using ConfigurationsJutulDarcy: SVector
 using JutulDarcy.Jutul
 
 using DrWatson
-include(srcdir("options.jl"))
+using FilterComparison
 
 Darcy, bar, kg, meter, day, yr = si_units(:darcy, :bar, :kilogram, :meter, :day, :year)
 mD_to_meters2 = 1e-3 * Darcy
@@ -95,7 +97,8 @@ params = JutulJUDIFilterOptions(;
         transition=ground_truth.transition,
         observation=ground_truth.observation,
         # algorithm=nothing,
-        assimilation_keys=(:Saturation,),
+        assimilation_state_keys=(:Saturation,),
+        assimilation_obs_keys=(:rtm,),
         algorithm=EnKFOptions(;
             noise=NoiseOptions(; std=1, type=:diagonal),
             include_noise_in_obs_covariance=false,

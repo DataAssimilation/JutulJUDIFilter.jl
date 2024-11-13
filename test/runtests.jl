@@ -46,8 +46,8 @@ report_testsets = @testset ReportingTestSet "" begin
     @info "Running package tests."
     @test true
 
-    @info "Running doctests."
     # Set metadata for doctests.
+    @info "Running doctests."
     DocMeta.setdocmeta!(
         JutulJUDIFilter, :DocTestSetup, :(using JutulJUDIFilter, Test); recursive=true
     )

@@ -1,4 +1,3 @@
-
 export show_interactive
 function show_interactive(fig)
     if Base.is_interactive
@@ -34,3 +33,4 @@ function get_ground_truth_iterator(ensembles_ts, observation_times)
     end
     return gt_indices, post_assim_indices
 end
+

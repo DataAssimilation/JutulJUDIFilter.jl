@@ -1338,7 +1338,7 @@ function plot_states(
     state = @lift(states[$(controls.t_idx)] ./ 1e3)
     ax = plot_scalar_field(content_layout, state, params; grid_2d, heatmap_kwargs)
 
-    global cb = content(fig[1, 1][1, 2])
+    cb = content(fig[1, 1][1, 2])
     cb.label = "km/s"
     # cb.labelrotation[] = 0.0
 

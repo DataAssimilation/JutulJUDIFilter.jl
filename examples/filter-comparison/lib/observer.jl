@@ -2,6 +2,8 @@
 using Configurations: @option
 using Ensembles: Ensembles, AbstractOperator
 using DrWatson: projectdir
+using Random: Random
+using Ensembles: Ensembles, NoisyObserver, KeyObserver, get_state_keys
 
 export get_observer
 function get_observer(options::NoisyObservationOptions)
@@ -40,3 +42,23 @@ Ensembles.xor_seed!(::NothingObserver, seed_mod::UInt) = nothing
 function Ensembles.split_clean_noisy(::NothingObserver, obs::Dict{Symbol,<:Any})
     return (Dict{Symbol,Any}(), Dict{Symbol,Any}())
 end
+
+function NoisyObserverConfigurations(op::Ensembles.AbstractOperator; params)
+    noise_scale = params.noise_scale
+    seed = params.seed
+    rng = Random.MersenneTwister(seed)
+    if seed == 0
+        seed = Random.rand(UInt64)
+    end
+    Random.seed!(rng, seed)
+    state_keys = get_state_keys(op)
+    if !params.only_noisy
+        state_keys = append!(
+            [Symbol(key, :_noisy) for key in get_state_keys(op)], state_keys
+        )
+    end
+
+    return NoisyObserver(op, state_keys, noise_scale, rng, seed, params.only_noisy)
+end
+
+NoisyObserverConfigurations(state_keys; params) = NoisyObserverConfigurations(KeyObserver(state_keys); params)

@@ -10,6 +10,4 @@ include("parula.jl")
 include("plotting_utils.jl")
 include("plotting_plumes.jl")
 
-using DrWatson
-
 end # module JutulJUDIFilter

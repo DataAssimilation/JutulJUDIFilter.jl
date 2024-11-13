@@ -156,7 +156,7 @@ function SeismicModel(options::SeismicObserverOptions)
     )
 end
 
-function get_observer(options::SeismicCO2ObserverOptions)
+function FilterComparison.get_observer(options::SeismicCO2ObserverOptions)
     return SeismicCO2Observer(options)
 end
 

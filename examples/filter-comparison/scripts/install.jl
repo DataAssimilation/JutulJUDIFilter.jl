@@ -48,11 +48,11 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         JutulJUDIFilter.install(:ConfigurationsJutulDarcy)
     end
 
-    try
-        import ConfigurationsJUDI: ConfigurationsJUDI
-    catch
-        JutulJUDIFilter.install(:ConfigurationsJUDI)
-    end
+    # try
+    #     import ConfigurationsJUDI: ConfigurationsJUDI
+    # catch
+    #     JutulJUDIFilter.install(:ConfigurationsJUDI)
+    # end
 
     try
         using EnsembleKalmanFilters: EnsembleKalmanFilters
@@ -60,11 +60,11 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         Ensembles.install(:EnsembleKalmanFilters)
     end
 
-    try
-        using NormalizingFlowFilters: NormalizingFlowFilters
-    catch
-        Ensembles.install(:NormalizingFlowFilters)
-    end
+    # try
+    #     using NormalizingFlowFilters: NormalizingFlowFilters
+    # catch
+    #     Ensembles.install(:NormalizingFlowFilters)
+    # end
 
     Pkg.add([
         "CairoMakie",
@@ -75,7 +75,6 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         "Format",
         "ImageFiltering",
         "JLD2",
-        "JOLI",
         "JUDI",
         "JutulDarcy",
         "LinearAlgebra",
