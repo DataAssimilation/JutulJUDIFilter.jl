@@ -61,4 +61,6 @@ function NoisyObserverConfigurations(op::Ensembles.AbstractOperator; params)
     return NoisyObserver(op, state_keys, noise_scale, rng, seed, params.only_noisy)
 end
 
-NoisyObserverConfigurations(state_keys; params) = NoisyObserverConfigurations(KeyObserver(state_keys); params)
+function NoisyObserverConfigurations(state_keys; params)
+    return NoisyObserverConfigurations(KeyObserver(state_keys); params)
+end
