@@ -210,15 +210,15 @@ function plot_data(content_layout, state, params, ::Val{:velocity}; heatmap_kwar
 end
 
 export plot_scalar_field
-function plot_scalar_field(content_layout, data, params=nothing; grid_2d, heatmap_kwargs=(;), colorbar_kwargs=(;))
+function plot_scalar_field(content_layout, data, params=nothing; grid_2d, idx_cutoff=(:,:), grid_cutoff=grid_2d, heatmap_kwargs=(;), colorbar_kwargs=(;))
     heatmap_aspect = get_grid_col_aspect(grid_2d)
 
     # Plot first saturation.
     ax = Axis(content_layout[1, 1])
 
-    shaped_data = @lift(reshape($data, grid_2d.n))
+    shaped_data = @lift(reshape($data, grid_2d.n)[idx_cutoff...])
     hm = plot_heatmap_from_grid!(
-        ax, shaped_data, grid_2d; make_heatmap=true, heatmap_kwargs...
+        ax, shaped_data, grid_cutoff; make_heatmap=true, heatmap_kwargs...
     )
 
     if !isnothing(colorbar_kwargs)
@@ -337,6 +337,15 @@ function get_2d_plotting_mesh(grid)
     )
 end
 
+export cutoff_mesh
+function cutoff_mesh(grid; top)
+    cutoff_idx = Int(max(top ÷ grid.d[end], 1))
+    top = cutoff_idx * grid.d[end]
+    n = grid.n .- (0, cutoff_idx - 1)
+    origin = grid.origin .- (0, top)
+    return (:, cutoff_idx:grid.n[1]), (; d = grid.d, origin, n,)
+end
+
 export plot_states
 function plot_states(state_times, states, params; save_dir_root, try_interactive=false)
     @assert length(states) == length(state_times)
@@ -367,13 +376,15 @@ function plot_states(
     state_times, states, params, ::Val{:Saturation}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
         state_times, states, params
     )
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
-    ax = plot_data(content_layout, state, params, :Saturation; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, :Saturation; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     controls.interactive_savor.active[] = true
     try_interactive && show_interactive_preview(fig, controls)
@@ -398,6 +409,8 @@ function plot_states(
     state_times, states, params, ::Val{:Saturation_Permeability}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
         state_times, states, params
     )
@@ -413,6 +426,8 @@ function plot_states(
         grid_2d,
         heatmap_kwargs=(;colorrange = default_data_range, colormap=Reverse(:Purples)),
         colorbar_kwargs=nothing,
+        grid_cutoff,
+        idx_cutoff,
     )
 
     data = @lift let
@@ -420,9 +435,9 @@ function plot_states(
         data_thresholded = ifelse.(abs.(data) .< 0, 0.0, data)
         data_zeros = ifelse.(data_thresholded .<= 0, NaN, data_thresholded)
     end
-    shaped_data = @lift(reshape($data, grid_2d.n))
+    shaped_data = @lift(reshape($data, grid_2d.n)[idx_cutoff...])
     hm = plot_heatmap_from_grid!(
-        ax, shaped_data, grid_2d; make_heatmap=true, heatmap_kwargs...
+        ax, shaped_data, grid_cutoff; make_heatmap=true, heatmap_kwargs...
     )
 
     controls.interactive_savor.active[] = true
@@ -448,6 +463,7 @@ function plot_states(
     state_times, states, params, ::Val{:Pressure}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+
     # default_data_range = (0e0, 5e7)
     default_data_range = extrema(Iterators.flatten(extrema.(s[:Pressure] for s in states)))
     fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
@@ -484,6 +500,8 @@ function plot_states(
     state_times, states, params, ::Val{:Pressure_diff}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     function pressure_diff(state)
         return state[:Pressure] .- states[1][:Pressure]
     end
@@ -507,7 +525,7 @@ function plot_states(
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
-    ax = plot_data(content_layout, state, params, pressure_diff; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, pressure_diff; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "MPa"
@@ -535,6 +553,8 @@ function plot_states(
     state_times, states, params, ::Val{:Permeability}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     default_data_range = extrema(
         Iterators.flatten(extrema.(s[:Permeability] for s in states))
     )
@@ -548,7 +568,7 @@ function plot_states(
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
-    ax = plot_data(content_layout, state, params, :Permeability; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, :Permeability; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "millidarcy"
@@ -688,6 +708,8 @@ function plot_states(
     state_times, states, params, ::Val{:velocity_diff}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     function velocity_diff(state)
         return state[:velocity] .- states[1][:velocity]
     end
@@ -710,7 +732,7 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(velocity_diff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :velocity; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, :velocity; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "km/s"
@@ -785,6 +807,8 @@ function plot_states(
     state_times, states, params, ::Val{:impedance_diff}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     imp0 = states[1][:density] .* states[1][:velocity]
     function impedance_diff(state)
         return state[:density] .* state[:velocity] .- imp0
@@ -808,7 +832,7 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(impedance_diff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :impedance; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, :impedance; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     cb = content(fig[1, 1][1, 2])
     cb.label = L"g/mL$\cdot$km/s"
@@ -836,6 +860,8 @@ function plot_states(
     state_times, states, params, ::Val{:impedance_reldiff}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     imp0 = states[1][:density] .* states[1][:velocity]
     function impedance_diff(state)
         return 
@@ -862,7 +888,7 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(impedance_reldiff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :impedance; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, :impedance; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "% change"
@@ -890,6 +916,8 @@ function plot_states(
     state_times, states, params, ::Val{:density_diff}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     function density_diff(state)
         return state[:density] .- states[1][:density]
     end
@@ -912,7 +940,7 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(density_diff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :density; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, :density; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "g/mL"
@@ -940,6 +968,8 @@ function plot_states(
     state_times, states, params, ::Val{:density_reldiff}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     function density_reldiff(state)
         return 1e5 .* (state[:density] .- states[1][:density]) ./ states[1][:density]
     end
@@ -962,7 +992,7 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(density_reldiff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :density; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, :density; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "% change"
@@ -990,6 +1020,8 @@ function plot_states(
     state_times, states, params, ::Val{:velocity_reldiff}; save_dir_root, try_interactive
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
+    idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
+
     function velocity_reldiff(state)
         return 1e5 .* (state[:velocity] .- states[1][:velocity]) ./ states[1][:velocity]
     end
@@ -1012,7 +1044,7 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(velocity_reldiff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :velocity; grid_2d, heatmap_kwargs)
+    ax = plot_data(content_layout, state, params, :velocity; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "% change"
