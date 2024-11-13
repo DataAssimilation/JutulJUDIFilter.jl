@@ -1,5 +1,7 @@
 # Define parameters.
 
+include("../scripts/install.jl")
+
 using ConfigurationsJutulDarcy
 using ConfigurationsJutulDarcy: @option
 using ConfigurationsJutulDarcy: SVector
@@ -7,6 +9,7 @@ using JutulDarcy.Jutul
 
 using DrWatson
 using FilterComparison
+
 
 Darcy, bar, kg, meter, day, yr = si_units(:darcy, :bar, :kilogram, :meter, :day, :year)
 mD_to_meters2 = 1e-3 * Darcy
@@ -136,7 +139,7 @@ estimator_observation = MultiTimeObserverOptions(;
 params = JutulJUDIFilterOptions(;
     ground_truth,
     ensemble=EnsembleOptions(;
-        size=10,
+        size=8,
         seed=9347215,
         mesh=params_transition.mesh,
         permeability_v_over_h=0.36,
