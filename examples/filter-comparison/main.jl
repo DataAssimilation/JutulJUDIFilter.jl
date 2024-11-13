@@ -40,7 +40,6 @@ fig_path = Markdown.parse("""
 ![ground truth pressure_diff 6]($(joinpath(d, "pressure_diff", "06.png")))
 """)
 
-
 # ## Saturation on top of permeability
 fig_path = Markdown.parse("""
 ![ground truth saturation 1]($(joinpath(d, "saturation_permeability", "01.png")))

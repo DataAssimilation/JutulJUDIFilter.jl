@@ -11,12 +11,7 @@ isinteractive() && global_logger(TerminalLogger())
 
 using DrWatson: wsave, datadir, produce_or_load, projectdir, srcdir
 using Ensembles:
-    Ensembles,
-    Ensemble,
-    get_state_keys,
-    get_ensemble_matrix,
-    split_clean_noisy,
-    xor_seed!
+    Ensembles, Ensemble, get_state_keys, get_ensemble_matrix, split_clean_noisy, xor_seed!
 using Random: Random
 
 using ConfigurationsJutulDarcy

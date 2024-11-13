@@ -30,7 +30,6 @@ data_ensemble, _, filestem_ensemble = produce_or_load_run_estimator(
     params; loadfile=true, force=false
 )
 
-
 state_means = data_ensemble["state_means"]
 # state_stds = data_ensemble["state_stds"]
 state_times = data_ensemble["state_times"]
@@ -83,7 +82,12 @@ with_theme(theme_latexfonts()) do
 
     for (i, ensemble) in enumerate(states)
         save_dir = joinpath(save_dir_root, "t$i")
-        plot_states(1:length(ensemble.members), ensemble.members, params.estimator; save_dir_root=save_dir)
+        plot_states(
+            1:length(ensemble.members),
+            ensemble.members,
+            params.estimator;
+            save_dir_root=save_dir,
+        )
     end
 end
 

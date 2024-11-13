@@ -10,7 +10,6 @@ using JutulDarcy.Jutul
 using DrWatson
 using FilterComparison
 
-
 Darcy, bar, kg, meter, day, yr = si_units(:darcy, :bar, :kilogram, :meter, :day, :year)
 mD_to_meters2 = 1e-3 * Darcy
 
@@ -39,10 +38,7 @@ params_transition = JutulOptions(;
     # permeability=FieldOptions(0.1Darcy),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;
-            file="compass_small/perm_poro.jld2",
-            key="K",
-            scale=mD_to_meters2,
-            resize=true,
+            file="compass_small/perm_poro.jld2", key="K", scale=mD_to_meters2, resize=true
         ),
     ),
     permeability_v_over_h=0.36,
@@ -80,13 +76,19 @@ observer_options = SeismicCO2ObserverOptions(;
             type=:squared_slowness,
             field=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass_small/BGCompass_tti_625m.jld2", key="m", scale=1e-6, resize=true
+                    file="compass_small/BGCompass_tti_625m.jld2",
+                    key="m",
+                    scale=1e-6,
+                    resize=true,
                 ),
             ),
         ),
         density=FieldOptions(;
             suboptions=FieldFileOptions(;
-                file="compass_small/BGCompass_tti_625m.jld2", key="rho", scale=1e3, resize=true
+                file="compass_small/BGCompass_tti_625m.jld2",
+                key="rho",
+                scale=1e3,
+                resize=true,
             ),
         ),
         background_velocity=BackgroundBlurOptions(; cells=10.0),
@@ -97,17 +99,17 @@ observer_options = SeismicCO2ObserverOptions(;
         ),
         seed=0xb874e67219a0aba4,
         depth_scaling_exponent=1,
-        snr = 8.0,
+        snr=8.0,
     ),
     rock_physics=RockPhysicsModelOptions(;
         porosity=FieldOptions(0.25),
-        density_CO2 = 501.9,
-        density_H2O = 1053.0,
-        bulk_min = 36.6e9,
-        bulk_H2O = 2.735e9,
-        bulk_CO2 = 0.125e9,
+        density_CO2=501.9,
+        density_H2O=1053.0,
+        bulk_min=36.6e9,
+        bulk_H2O=2.735e9,
+        bulk_CO2=0.125e9,
     ),
-    save_intermediate = true,
+    save_intermediate=true,
 )
 
 ground_truth = ModelOptions(;
@@ -122,7 +124,7 @@ ground_truth = ModelOptions(;
             5yr => observer_options,
         ),
     ),
-    max_transition_step = 0.1yr,
+    max_transition_step=0.1yr,
 )
 
 estimator_observation = MultiTimeObserverOptions(;
@@ -160,12 +162,12 @@ params = JutulJUDIFilterOptions(;
         observation=estimator_observation,
         # algorithm=nothing,
         assimilation_state_keys=(:Saturation,),
-        assimilation_obs_keys = (:rtm,),
+        assimilation_obs_keys=(:rtm,),
         algorithm=EnKFOptions(;
             noise=NoiseOptions(; std=3e15, type=:diagonal),
             include_noise_in_obs_covariance=false,
             rho=0,
         ),
-        max_transition_step = 0.1yr,
+        max_transition_step=0.1yr,
     ),
 )

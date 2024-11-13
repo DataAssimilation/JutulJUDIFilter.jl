@@ -1,6 +1,17 @@
 
 using Makie:
-    Figure, Axis, Colorbar, colsize!, Aspect, resize_to_layout!, xlims!, ylims!, contourf, @lift, events, Keyboard
+    Figure,
+    Axis,
+    Colorbar,
+    colsize!,
+    Aspect,
+    resize_to_layout!,
+    xlims!,
+    ylims!,
+    contourf,
+    @lift,
+    events,
+    Keyboard
 
 export plot_heatmap_from_grid!
 function plot_heatmap_from_grid!(ax, a, grid; kwargs...)

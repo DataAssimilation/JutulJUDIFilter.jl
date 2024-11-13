@@ -86,7 +86,7 @@ export EstimatorOptions
     algorithm
     assimilation_state_keys::Tuple{Vararg{Symbol}}
     assimilation_obs_keys::Tuple{Vararg{Symbol}}
-    max_transition_step::Union{Nothing, Float64} = nothing
+    max_transition_step::Union{Nothing,Float64} = nothing
 end
 
 export NoiseOptions
@@ -130,7 +130,7 @@ export ModelOptions
     version = "v0.2"
     transition::JutulOptions
     observation::MultiTimeObserverOptions
-    max_transition_step::Union{Nothing, Float64} = nothing
+    max_transition_step::Union{Nothing,Float64} = nothing
 end
 
 export EnsembleOptions
@@ -150,4 +150,3 @@ export JutulJUDIFilterOptions
     ensemble::EnsembleOptions
     estimator::EstimatorOptions
 end
-

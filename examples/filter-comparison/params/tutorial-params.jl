@@ -94,10 +94,10 @@ observer_options = SeismicCO2ObserverOptions(;
         ),
         seed=0xb874e67219a0aba4,
         depth_scaling_exponent=1,
-        snr = 20.0,
+        snr=20.0,
     ),
     rock_physics=RockPhysicsModelOptions(; porosity=FieldOptions(0.25)),
-    save_intermediate = true,
+    save_intermediate=true,
 )
 
 ground_truth = ModelOptions(;
@@ -137,7 +137,7 @@ params = JutulJUDIFilterOptions(;
         observation=ground_truth.observation,
         # algorithm=nothing,
         assimilation_state_keys=(:Saturation,),
-        assimilation_obs_keys = (:rtm,),
+        assimilation_obs_keys=(:rtm,),
         algorithm=EnKFOptions(;
             noise=NoiseOptions(; std=3e15, type=:diagonal),
             include_noise_in_obs_covariance=false,

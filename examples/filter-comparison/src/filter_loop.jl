@@ -4,7 +4,15 @@ using ProgressLogging: @withprogress, @logprogress
 using Ensembles: assimilate_data, split_clean_noisy
 
 function filter_loop(
-    ensemble, t0, estimator, transitioner, observers, observations_gt; name="Time", max_transition_step=nothing, assimilation_obs_keys=nothing
+    ensemble,
+    t0,
+    estimator,
+    transitioner,
+    observers,
+    observations_gt;
+    name="Time",
+    max_transition_step=nothing,
+    assimilation_obs_keys=nothing,
 )
     logs = []
     states = []
@@ -24,28 +32,30 @@ function filter_loop(
     state_keys = collect(keys(ensemble.members[1]))
     @time begin
         push!(states, deepcopy(ensemble))
-        push!(state_means, mean(ensemble;  state_keys=state_keys))
+        push!(state_means, mean(ensemble; state_keys=state_keys))
         push!(state_times, t0)
         tf = observers.times[end]
         @withprogress name = progress_name begin
             for ((t, observer_options), y_obs) in
-                                               zip(observers.times_observers, observations_gt)
+                zip(observers.times_observers, observations_gt)
                 ## Advance ensemble to time t.
                 if t0 != t
                     if !isnothing(max_transition_step)
                         while t0 + max_transition_step < t
-                            ensemble = transitioner(ensemble, t0, t0 + max_transition_step; inplace=true)
+                            ensemble = transitioner(
+                                ensemble, t0, t0 + max_transition_step; inplace=true
+                            )
                             t0 += max_transition_step
-                            @logprogress t0/tf
+                            @logprogress t0 / tf
                             push!(states, deepcopy(ensemble))
-                            push!(state_means, mean(ensemble;  state_keys=state_keys))
+                            push!(state_means, mean(ensemble; state_keys=state_keys))
                             # push!(state_stds, std(ensemble;  state_keys=state_keys))
                             push!(state_times, t0)
                         end
                     end
                     ensemble = transitioner(ensemble, t0, t; inplace=true)
                     push!(states, deepcopy(ensemble))
-                    push!(state_means, mean(ensemble;  state_keys=state_keys))
+                    push!(state_means, mean(ensemble; state_keys=state_keys))
                     # push!(state_stds, std(ensemble;  state_keys=state_keys))
                     push!(state_times, t)
                 end
@@ -97,11 +107,11 @@ function filter_loop(
                     ## Record.
                     push!(logs, log_data)
                     push!(states, deepcopy(ensemble))
-                    push!(state_means, mean(ensemble;  state_keys=state_keys))
+                    push!(state_means, mean(ensemble; state_keys=state_keys))
                     # push!(state_stds, std(ensemble;  state_keys=state_keys))
                     push!(state_times, t)
                 end
-                @logprogress t0/tf
+                @logprogress t0 / tf
             end
         end
     end
