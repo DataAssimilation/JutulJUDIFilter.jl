@@ -60,11 +60,11 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         Ensembles.install(:EnsembleKalmanFilters)
     end
 
-    # try
-    #     using NormalizingFlowFilters: NormalizingFlowFilters
-    # catch
-    #     Ensembles.install(:NormalizingFlowFilters)
-    # end
+    try
+        using NormalizingFlowFilters: NormalizingFlowFilters
+    catch
+        Ensembles.install(:NormalizingFlowFilters)
+    end
 
     Pkg.add([
         "CairoMakie",
