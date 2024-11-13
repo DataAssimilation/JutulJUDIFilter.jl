@@ -3,13 +3,13 @@
 |  |     |
 |--|:---:|
 | [**Documentation**][docs-latest-url]    | [<img src="https://img.shields.io/badge/docs-latest-blue.svg" alt = "doc badge" height="30">][docs-latest-url] |
-| [**CI tests**][checks-url]        | [<img src="https://github.com/tmp398243/tmp335274/actions/workflows/checks.yaml/badge.svg?branch=main" alt = "CI badge" height="30">][checks-url] |
-| [**Code Coverage**][codecov-url]    | [<img src="https://tmp398243.github.io/tmp335274/coverage/badge.svg" alt = "coverage badge" height="30">][codecov-url] |
+| [**CI tests**][checks-url]        | [<img src="https://github.com/DataAssimilation/JutulJUDIFilter.jl/actions/workflows/checks.yaml/badge.svg?branch=main" alt = "CI badge" height="30">][checks-url] |
+| [**Code Coverage**][codecov-url]    | [<img src="https://tmp398243.github.io/JutulJUDIFilter.jl/coverage/badge.svg" alt = "coverage badge" height="30">][codecov-url] |
 
-[docs-latest-url]: https://tmp398243.github.io/tmp335274
-[checks-url]: https://github.com/tmp398243/tmp335274/actions/workflows/checks.yaml?query=branch%3Amain
-[docs-build-url]: https://github.com/tmp398243/tmp335274/actions/workflows/docs.yaml?query=branch%3Amain
-[codecov-url]: https://tmp398243.github.io/tmp335274/coverage/
+[docs-latest-url]: https://tmp398243.github.io/JutulJUDIFilter.jl
+[checks-url]: https://github.com/DataAssimilation/JutulJUDIFilter.jl/actions/workflows/checks.yaml?query=branch%3Amain
+[docs-build-url]: https://github.com/DataAssimilation/JutulJUDIFilter.jl/actions/workflows/docs.yaml?query=branch%3Amain
+[codecov-url]: https://tmp398243.github.io/JutulJUDIFilter.jl/coverage/
 
 This package exists as a template for quickly getting a Julia package set up with continuous integration and documentation support. If you have suggestions for making this better, you are very welcome to make an issue or pull request to discuss it.
 
