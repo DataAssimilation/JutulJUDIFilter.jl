@@ -56,21 +56,18 @@ params_transition = JutulOptions(;
     ),
 )
 
-observer_options = NoisyObservationOptions(;
-    noise_scale=1.0,
-    keys=(:Saturation,),
-)
+observer_options = NoisyObservationOptions(; noise_scale=1.0, keys=(:Saturation,))
 
 ground_truth = ModelOptions(;
     transition=params_transition,
     observation=MultiTimeObserverOptions(;
         observers=(
-            3*0yr => observer_options,
-            3*1yr => observer_options,
-            3*2yr => observer_options,
-            3*3yr => observer_options,
-            3*4yr => observer_options,
-            3*5yr => observer_options,
+            3 * 0yr => observer_options,
+            3 * 1yr => observer_options,
+            3 * 2yr => observer_options,
+            3 * 3yr => observer_options,
+            3 * 4yr => observer_options,
+            3 * 5yr => observer_options,
         ),
     ),
 )

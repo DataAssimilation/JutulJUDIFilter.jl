@@ -33,9 +33,10 @@ function get_multi_time_observer(options::MultiTimeObserverOptions)
     return MultiTimeObserver(collect(options.observers))
 end
 
-struct NothingObserver <: AbstractOperator
-end
+struct NothingObserver <: AbstractOperator end
 
 Ensembles.xor_seed!(::NothingObserver, seed_mod::UInt) = nothing
-(M::NothingObserver)(member::Dict{Symbol,Any}) = Dict{Symbol, Any}()
-Ensembles.split_clean_noisy(::NothingObserver, obs::Dict{Symbol,<:Any}) = (Dict{Symbol, Any}(),  Dict{Symbol, Any}())
+(M::NothingObserver)(member::Dict{Symbol,Any}) = Dict{Symbol,Any}()
+function Ensembles.split_clean_noisy(::NothingObserver, obs::Dict{Symbol,<:Any})
+    return (Dict{Symbol,Any}(), Dict{Symbol,Any}())
+end

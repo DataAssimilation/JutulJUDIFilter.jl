@@ -252,7 +252,7 @@ function get_dt_forces(M::JutulModel{K}, t0, t) where {K}
         start_time += M.dt[start_step]
         start_step += 1
     end
-    @assert sum(M.dt[1:start_step-1]) <= t0
+    @assert sum(M.dt[1:(start_step - 1)]) <= t0
     @assert sum(M.dt[1:start_step]) >= t0
     stop_step = 0
     stop_time = 0
@@ -260,16 +260,16 @@ function get_dt_forces(M::JutulModel{K}, t0, t) where {K}
         stop_step += 1
         stop_time += M.dt[stop_step]
     end
-    @assert sum(M.dt[1:stop_step]) >= t*(1-1e-15)
-    @assert sum(M.dt[1:stop_step-1]) <= t
+    @assert sum(M.dt[1:stop_step]) >= t * (1 - 1e-15)
+    @assert sum(M.dt[1:(stop_step - 1)]) <= t
 
     forces = M.forces[start_step:stop_step]
     if start_step == stop_step
         dt = [t - t0]
     else
         dt = deepcopy(M.dt[start_step:stop_step])
-        dt[1] -= t0 - sum(M.dt[1:(start_step-1)])
-        dt[end] = t - sum(M.dt[1:(stop_step-1)])
+        dt[1] -= t0 - sum(M.dt[1:(start_step - 1)])
+        dt[end] = t - sum(M.dt[1:(stop_step - 1)])
     end
     return dt, forces
 end

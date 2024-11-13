@@ -1,11 +1,44 @@
 
 using DrWatson: wsave
 
-using Makie: Makie, SliderGrid, RGBf, Textbox, Button, Menu, IntervalSlider,
-Toggle, Observable, on, onany, Label, @L_str, Axis, scatterlines!, ylims!,
-Legend, latexstring, Auto, rowsize!, colsize!, Colorbar, rowgap!, colgap!,
-Relative, Box, heatmap!, hidespines!, content, Reverse, Top, GridLayout, Fixed,
-MarkerElement, lines!, scatter!, axislegend
+using Makie:
+    Makie,
+    SliderGrid,
+    RGBf,
+    Textbox,
+    Button,
+    Menu,
+    IntervalSlider,
+    Toggle,
+    Observable,
+    on,
+    onany,
+    Label,
+    @L_str,
+    Axis,
+    scatterlines!,
+    ylims!,
+    Legend,
+    latexstring,
+    Auto,
+    rowsize!,
+    colsize!,
+    Colorbar,
+    rowgap!,
+    colgap!,
+    Relative,
+    Box,
+    heatmap!,
+    hidespines!,
+    content,
+    Reverse,
+    Top,
+    GridLayout,
+    Fixed,
+    MarkerElement,
+    lines!,
+    scatter!,
+    axislegend
 
 using Format: cfmt
 using ProgressLogging: @withprogress, @logprogress
@@ -75,7 +108,7 @@ function plot_data(
         end
     end
 
-    heatmap_kwargs = Dict{Symbol, Any}(pairs(heatmap_kwargs))
+    heatmap_kwargs = Dict{Symbol,Any}(pairs(heatmap_kwargs))
     colorrange = pop!(heatmap_kwargs, :colorrange, nothing)
     if !isnothing(colorrange)
         colorrange = @lift($colorrange ./ 1e6)
@@ -164,7 +197,9 @@ function plot_data(content_layout, state, params, ::Val{:rtm}; heatmap_kwargs, k
     return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
-function plot_data(content_layout, state, params, ::Val{:density}; heatmap_kwargs, kwargs...)
+function plot_data(
+    content_layout, state, params, ::Val{:density}; heatmap_kwargs, kwargs...
+)
     data = @lift begin
         if isa($state, Dict)
             $state[:density] ./ 1e3
@@ -179,7 +214,9 @@ function plot_data(content_layout, state, params, ::Val{:density}; heatmap_kwarg
     return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
-function plot_data(content_layout, state, params, ::Val{:impedance}; heatmap_kwargs, kwargs...)
+function plot_data(
+    content_layout, state, params, ::Val{:impedance}; heatmap_kwargs, kwargs...
+)
     data = @lift begin
         if isa($state, Dict)
             $state[:velocity] .* $state[:density] ./ 1e6
@@ -194,7 +231,9 @@ function plot_data(content_layout, state, params, ::Val{:impedance}; heatmap_kwa
     return plot_scalar_field(content_layout, data, params; heatmap_kwargs, kwargs...)
 end
 
-function plot_data(content_layout, state, params, ::Val{:velocity}; heatmap_kwargs, kwargs...)
+function plot_data(
+    content_layout, state, params, ::Val{:velocity}; heatmap_kwargs, kwargs...
+)
     data = @lift begin
         if isa($state, Dict)
             $state[:velocity] ./ 1e3
@@ -210,7 +249,16 @@ function plot_data(content_layout, state, params, ::Val{:velocity}; heatmap_kwar
 end
 
 export plot_scalar_field
-function plot_scalar_field(content_layout, data, params=nothing; grid_2d, idx_cutoff=(:,:), grid_cutoff=grid_2d, heatmap_kwargs=(;), colorbar_kwargs=(;))
+function plot_scalar_field(
+    content_layout,
+    data,
+    params=nothing;
+    grid_2d,
+    idx_cutoff=(:, :),
+    grid_cutoff=grid_2d,
+    heatmap_kwargs=(;),
+    colorbar_kwargs=(;),
+)
     heatmap_aspect = get_grid_col_aspect(grid_2d)
 
     # Plot first saturation.
@@ -326,14 +374,11 @@ function add_top_label(state_times, content_layout, t_idx)
     end
 end
 
-
 export get_2d_plotting_mesh
 function get_2d_plotting_mesh(grid)
     # Get mesh parameters in kilometers.
     return (;
-        d = grid.d[[1, end]] ./ 1e3,
-        origin = grid.origin[[1, end]] ./ 1e3,
-        n = grid.n[[1, end]]
+        d=grid.d[[1, end]] ./ 1e3, origin=grid.origin[[1, end]] ./ 1e3, n=grid.n[[1, end]]
     )
 end
 
@@ -343,7 +388,7 @@ function cutoff_mesh(grid; top)
     top = cutoff_idx * grid.d[end]
     n = grid.n .- (0, cutoff_idx - 1)
     origin = grid.origin .- (0, top)
-    return (:, cutoff_idx:grid.n[1]), (; d = grid.d, origin, n,)
+    return (:, cutoff_idx:grid.n[1]), (; d=grid.d, origin, n)
 end
 
 export plot_states
@@ -384,7 +429,16 @@ function plot_states(
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
-    ax = plot_data(content_layout, state, params, :Saturation; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :Saturation;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     controls.interactive_savor.active[] = true
     try_interactive && show_interactive_preview(fig, controls)
@@ -406,7 +460,12 @@ function plot_states(
 end
 
 function plot_states(
-    state_times, states, params, ::Val{:Saturation_Permeability}; save_dir_root, try_interactive
+    state_times,
+    states,
+    params,
+    ::Val{:Saturation_Permeability};
+    save_dir_root,
+    try_interactive,
 )
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     idx_cutoff, grid_cutoff = cutoff_mesh(grid_2d; top=1.2)
@@ -422,9 +481,13 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
 
-    ax = plot_data(content_layout, state, params, :Permeability;
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :Permeability;
         grid_2d,
-        heatmap_kwargs=(;colorrange = default_data_range, colormap=Reverse(:Purples)),
+        heatmap_kwargs=(; colorrange=default_data_range, colormap=Reverse(:Purples)),
         colorbar_kwargs=nothing,
         grid_cutoff,
         idx_cutoff,
@@ -525,7 +588,16 @@ function plot_states(
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
-    ax = plot_data(content_layout, state, params, pressure_diff; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        pressure_diff;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "MPa"
@@ -568,7 +640,16 @@ function plot_states(
 
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(states[$(controls.t_idx)])
-    ax = plot_data(content_layout, state, params, :Permeability; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :Permeability;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "millidarcy"
@@ -687,11 +768,10 @@ function plot_states(
     end
 end
 
-
 function plot_states(
     state_times, states::Vector{<:Dict}, params, ::Val{:velocity}; kwargs...
 )
-    plot_states(
+    return plot_states(
         state_times, [s[:velocity] for s in states], params, Val(:velocity); kwargs...
     )
 end
@@ -699,7 +779,7 @@ end
 function plot_states(
     state_times, states::Vector{<:Dict}, params, ::Val{:density}; kwargs...
 )
-    plot_states(
+    return plot_states(
         state_times, [s[:density] for s in states], params, Val(:density); kwargs...
     )
 end
@@ -732,7 +812,16 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(velocity_diff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :velocity; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :velocity;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "km/s"
@@ -769,11 +858,7 @@ function plot_states(
         return nothing
     end
     fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
-        state_times,
-        states,
-        params;
-        default_data_range,
-        default_colormap=parula,
+        state_times, states, params; default_data_range, default_colormap=parula
     )
 
     add_top_label(state_times, content_layout, controls.t_idx)
@@ -832,7 +917,16 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(impedance_diff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :impedance; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :impedance;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     cb = content(fig[1, 1][1, 2])
     cb.label = L"g/mL$\cdot$km/s"
@@ -864,7 +958,7 @@ function plot_states(
 
     imp0 = states[1][:density] .* states[1][:velocity]
     function impedance_diff(state)
-        return 
+        return nothing
     end
     function impedance_reldiff(state)
         return 1e8 .* (state[:density] .* state[:velocity] .- imp0) ./ imp0
@@ -888,7 +982,16 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(impedance_reldiff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :impedance; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :impedance;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "% change"
@@ -940,7 +1043,16 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(density_diff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :density; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :density;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "g/mL"
@@ -992,7 +1104,16 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(density_reldiff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :density; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :density;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "% change"
@@ -1044,7 +1165,16 @@ function plot_states(
     add_top_label(state_times, content_layout, controls.t_idx)
     state = @lift(velocity_reldiff(states[$(controls.t_idx)]))
 
-    ax = plot_data(content_layout, state, params, :velocity; grid_2d, heatmap_kwargs, grid_cutoff, idx_cutoff)
+    ax = plot_data(
+        content_layout,
+        state,
+        params,
+        :velocity;
+        grid_2d,
+        heatmap_kwargs,
+        grid_cutoff,
+        idx_cutoff,
+    )
 
     cb = content(fig[1, 1][1, 2])
     cb.label = "% change"
@@ -1350,7 +1480,6 @@ function plot_states(
     end
 end
 
-
 export plot_points_of_interest, plot_points_of_interest!
 function plot_points_of_interest(params, args...; save_dir_root, try_interactive, kwargs...)
     colormap = parula
@@ -1358,7 +1487,7 @@ function plot_points_of_interest(params, args...; save_dir_root, try_interactive
     tmp = Observable(zeros(grid_2d.n) .+ NaN)
 
     fig, content_layout, controls, heatmap_kwargs = make_time_domain_figure_with_controls(
-        [0], [tmp], params; default_data_range=(0,1)
+        [0], [tmp], params; default_data_range=(0, 1)
     )
 
     ax = plot_scalar_field(content_layout, tmp, params; grid_2d, heatmap_kwargs)
@@ -1379,7 +1508,9 @@ function plot_points_of_interest(params, args...; save_dir_root, try_interactive
     end
 end
 
-function plot_points_of_interest!(ax, params, src_positions, rec_positions; idx_wb, idx_unconformity)
+function plot_points_of_interest!(
+    ax, params, src_positions, rec_positions; idx_wb, idx_unconformity
+)
     grid_2d = get_2d_plotting_mesh(params.transition.mesh)
     ORANGE = "#fc8d62"
     BLUE = "#8da0cb"
@@ -1388,50 +1519,65 @@ function plot_points_of_interest!(ax, params, src_positions, rec_positions; idx_
     LIGHTGREEN = "#a6d854"
     BLACK = "#222"
 
-    xs = range(grid_2d.d[1]/2; length = grid_2d.n[1], step = grid_2d.d[1]) .- grid_2d.origin[1]
-    ys = range(grid_2d.d[end]/2; length = grid_2d.n[end], step = grid_2d.d[end]) .- grid_2d.origin[end]
+    xs =
+        range(grid_2d.d[1] / 2; length=grid_2d.n[1], step=grid_2d.d[1]) .- grid_2d.origin[1]
+    ys =
+        range(grid_2d.d[end] / 2; length=grid_2d.n[end], step=grid_2d.d[end]) .-
+        grid_2d.origin[end]
 
     water_layer = zeros(grid_2d.n) .+ NaN
     water_layer[:, 1:idx_wb] .= 0.0
     heatmap!(ax, xs, ys, water_layer; colormap=[BLUE], colorrange=(0, 1))
-    le_water_layer = ("Water layer", MarkerElement(color = BLUE, marker = :rect, markersize = 30))
-
+    le_water_layer = (
+        "Water layer", MarkerElement(; color=BLUE, marker=:rect, markersize=30)
+    )
 
     unconformity = zeros(grid_2d.n) .+ NaN
     for (row, col) in enumerate(idx_unconformity)
-        unconformity[row, (col-8):col] .= 1.0
+        unconformity[row, (col - 8):col] .= 1.0
     end
     heatmap!(ax, xs, ys, unconformity; colormap=[BLACK], colorrange=(0, 1))
-    le_unconformity = ("Reservoir seal", MarkerElement(color = BLACK, marker = :rect, markersize = 24))
+    le_unconformity = (
+        "Reservoir seal", MarkerElement(; color=BLACK, marker=:rect, markersize=24)
+    )
 
     x = collect(t[1] for t in params.transition.injection.trajectory) ./ 1e3
     y = collect(t[3] for t in params.transition.injection.trajectory) ./ 1e3
     lines!(ax, x, y; linewidth=8, color=LIGHTGREEN)
-    le_injection = ("Injection range", MarkerElement(color = LIGHTGREEN, marker = :rect, markersize = 16))
+    le_injection = (
+        "Injection range", MarkerElement(; color=LIGHTGREEN, marker=:rect, markersize=16)
+    )
 
     # Plot seismic sources.
-    sc_sources = scatter!(ax, src_positions[1] ./ 1e3, src_positions[3] ./ 1e3, marker=:xcross, strokewidth=1, markersize=25, color=ORANGE)
+    sc_sources = scatter!(
+        ax,
+        src_positions[1] ./ 1e3,
+        src_positions[3] ./ 1e3;
+        marker=:xcross,
+        strokewidth=1,
+        markersize=25,
+        color=ORANGE,
+    )
     le_sources = ("Sources", sc_sources)
 
     # Plot seismic receivers.
-    sc_receivers = scatter!(ax, rec_positions[1] ./ 1e3, rec_positions[3] ./ 1e3, marker=:circle, strokewidth=1, markersize=15, color=PINK)
+    sc_receivers = scatter!(
+        ax,
+        rec_positions[1] ./ 1e3,
+        rec_positions[3] ./ 1e3;
+        marker=:circle,
+        strokewidth=1,
+        markersize=15,
+        color=PINK,
+    )
     le_receivers = ("Receivers", sc_receivers)
 
     # Add some entries to the legend group.
     custom_legend_entries = [
-        le_sources,
-        le_water_layer,
-        le_receivers,
-        le_unconformity,
-        le_injection,
+        le_sources, le_water_layer, le_receivers, le_unconformity, le_injection
     ]
 
     markers = last.(custom_legend_entries)
     labels = first.(custom_legend_entries)
-    leg = axislegend(ax,
-        markers,
-        labels,
-        position = :rc,
-        margin = (10, 10, 10, -80),
-    )
+    return leg = axislegend(ax, markers, labels; position=:rc, margin=(10, 10, 10, -80))
 end

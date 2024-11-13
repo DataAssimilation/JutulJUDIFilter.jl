@@ -76,7 +76,7 @@ function run_estimator(params)
         observers,
         observations_gt;
         name=get_short_name(params_estimator.algorithm),
-        max_transition_step = params_estimator.max_transition_step,
+        max_transition_step=params_estimator.max_transition_step,
         assimilation_obs_keys=params_estimator.assimilation_obs_keys,
     )
 end

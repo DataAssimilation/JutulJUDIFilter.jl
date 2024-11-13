@@ -94,6 +94,6 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
 end
 
 using DrWatson: projectdir
-if ! (projectdir("lib") in LOAD_PATH)
+if !(projectdir("lib") in LOAD_PATH)
     push!(LOAD_PATH, projectdir("lib"))
 end

@@ -41,14 +41,23 @@ with_theme(theme_latexfonts()) do
     save_dir_root = plotsdir("ground_truth", filestem_gt, "static")
     if isa(params.ground_truth.observation.observers[1].second, SeismicCO2ObserverOptions)
         params_seismic = params.ground_truth.observation.observers[1].second.seismic
-        (; velocity, density, velocity0, density0) = read_static_seismic_params(params_seismic)
+        (; velocity, density, velocity0, density0) = read_static_seismic_params(
+            params_seismic
+        )
 
         n = params_seismic.mesh.n
         d = params_seismic.mesh.d
         idx_wb = maximum(find_water_bottom_immutable(log.(velocity) .- log(velocity[1, 1])))
-        idx_unconformity = find_water_bottom_immutable((velocity .- 3500f0) .* (velocity .≥ 3500f0))
-        src_positions, rec_positions = build_source_receiver_geometry(n, d, idx_wb; params=params_seismic.source_receiver_geometry)
-        plot_points_of_interest(params.ground_truth, src_positions, rec_positions;
+        idx_unconformity = find_water_bottom_immutable(
+            (velocity .- 3500.0f0) .* (velocity .≥ 3500.0f0)
+        )
+        src_positions, rec_positions = build_source_receiver_geometry(
+            n, d, idx_wb; params=params_seismic.source_receiver_geometry
+        )
+        plot_points_of_interest(
+            params.ground_truth,
+            src_positions,
+            rec_positions;
             idx_wb,
             idx_unconformity,
             save_dir_root,

@@ -11,11 +11,7 @@ using ProgressLogging: @withprogress, @logprogress
 
 using DrWatson: wsave, datadir, produce_or_load, projectdir, srcdir
 using Ensembles:
-    Ensembles,
-    get_state_keys,
-    get_ensemble_matrix,
-    split_clean_noisy,
-    xor_seed!
+    Ensembles, get_state_keys, get_ensemble_matrix, split_clean_noisy, xor_seed!
 using Random: Random
 
 using ConfigurationsJutulDarcy
@@ -67,7 +63,7 @@ function generate_ground_truth(params)
 
         @withprogress name = "Ground-truth" begin
             cache = Dict()
-            @logprogress t0/tf
+            @logprogress t0 / tf
             for (t, observer_options) in observers.times_observers
                 if t0 != t
                     if !isnothing(max_transition_step)
@@ -76,7 +72,7 @@ function generate_ground_truth(params)
                             t0 += max_transition_step
                             push!(states, deepcopy(state))
                             push!(state_times, t0)
-                            @logprogress t0/tf
+                            @logprogress t0 / tf
                         end
                     end
                     state = M(state, t0, t)
@@ -97,7 +93,7 @@ function generate_ground_truth(params)
                 )
                 obs_idx += 1
                 t0 = t
-                @logprogress t0/tf
+                @logprogress t0 / tf
             end
         end
         (;

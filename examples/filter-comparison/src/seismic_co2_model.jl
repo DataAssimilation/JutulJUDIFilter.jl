@@ -48,10 +48,7 @@ function Ensembles.split_clean_noisy(M::SeismicCO2Observer{false}, obs::Dict{Sym
 end
 
 function Ensembles.split_clean_noisy(M::SeismicCO2Observer{true}, obs::Dict{Symbol,<:Any})
-    obs_clean = typeof(obs)(
-        :velocity => obs[:velocity],
-        :density => obs[:density],
-    )
+    obs_clean = typeof(obs)(:velocity => obs[:velocity], :density => obs[:density])
     obs_noisy = typeof(obs)()
     for key in (:dshot, :rtm)
         obs_clean[key] = obs[key]
