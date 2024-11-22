@@ -48,7 +48,7 @@ end
 function generate_prior_sample(sampler::FileSampler)
     if sampler.i >= length(sampler.permutation)
         sampler.i = 0
-        # error("There are only $(length(sampler.permutation)) samples available")
+        @warn "There are only $(length(sampler.permutation)) samples available. Resampling same samples."
     end
     sampler.i += 1
     return sampler.field[sampler.permutation[sampler.i], :, :]
@@ -89,15 +89,6 @@ function generate_initial_ensemble(params_en)
         member[:Permeability] = Kto3(
             member[:Permeability]; kvoverkh=params_en.permeability_v_over_h
         )
-
-        # K_min = 500.0
-        # K_minned = max.(K_min, K./mD_to_meters2)
-        # K_blur = imfilter(K_minned, Kernel.gaussian(10));
-        # K_lower_mD = max.(K_blur .- K_min, 0)
-        # idx = find_water_bottom_immutable(K_lower_mD)
-        # rows = 1:n[end]
-        # masks = [rows .>= idx[i] for i = 1:n[1]];
-        # update_mask = hcat(masks...)';
     end
 
     ensemble = Ensemble(members)
@@ -108,9 +99,11 @@ function initial_ensemble_stem(params)
     return string(hash(params.ensemble); base=62)
 end
 
-function produce_or_load_initial_ensemble(params; kwargs...)
+function produce_or_load_initial_ensemble(params; filestem=nothing, kwargs...)
     params_en = params.ensemble
-    filestem = initial_ensemble_stem(params)
+    if isnothing(filestem)
+        filestem = initial_ensemble_stem(params)
+    end
 
     params_file = datadir("initial_ensemble", "params", "$filestem.jld2")
     wsave(params_file; params=params_en)
@@ -124,7 +117,7 @@ function produce_or_load_initial_ensemble(params; kwargs...)
         params_en,
         savedir;
         filename=filestem,
-        verbose=false,
+        verbose=true,
         tag=false,
         loadfile=false,
         kwargs...,

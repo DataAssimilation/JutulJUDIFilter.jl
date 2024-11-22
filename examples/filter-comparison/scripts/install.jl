@@ -10,10 +10,12 @@ if isinteractive()
 end
 
 if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
-    basename(dirname(Base.active_project())) in ["v1.11", "v1.10"]
+    basename(dirname(Base.active_project())) != "filter-comparison"
     using Pkg: Pkg
 
-    Pkg.activate(joinpath(@__DIR__, ".."))
+    if basename(dirname(Base.active_project())) != "filter-comparison"
+        Pkg.activate(joinpath(@__DIR__, ".."))
+    end
     @assert basename(dirname(Base.active_project())) == "filter-comparison"
 
     try
@@ -37,12 +39,6 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         JutulJUDIFilter.install(:ConfigurationsJutulDarcy)
     end
 
-    # try
-    #     import ConfigurationsJUDI: ConfigurationsJUDI
-    # catch
-    #     JutulJUDIFilter.install(:ConfigurationsJUDI)
-    # end
-
     try
         using EnsembleKalmanFilters: EnsembleKalmanFilters
     catch
@@ -59,22 +55,20 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         "CairoMakie",
         "ChainRulesCore",
         "Configurations",
-        "Distributed",
         "DrWatson",
         "Format",
         "ImageFiltering",
+        "ImageTransformations",
         "JLD2",
         "JUDI",
         "JutulDarcy",
         "LinearAlgebra",
         "Logging",
         "Makie",
-        "Markdown",
         "ProgressLogging",
         "Random",
         "Statistics",
         "TerminalLoggers",
-        "WGLMakie",
         "YAML",
     ])
 

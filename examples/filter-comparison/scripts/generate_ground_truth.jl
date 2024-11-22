@@ -9,7 +9,7 @@ using Logging: global_logger
 isinteractive() && global_logger(TerminalLogger())
 using ProgressLogging: @withprogress, @logprogress
 
-using DrWatson: wsave, datadir, produce_or_load, projectdir, srcdir
+using DrWatson: wsave, datadir, produce_or_load, srcdir
 using Ensembles:
     Ensembles, get_state_keys, get_ensemble_matrix, split_clean_noisy, xor_seed!
 using Random: Random
@@ -40,7 +40,7 @@ function generate_ground_truth(params)
     ## Set seed for ground-truth simulation.
     Random.seed!(0xabceabd47cada8f4)
 
-    M = JutulModel(; translator=JMT, options=params.transition)
+    M = JutulModel(; translator=JMT, options=params.transition, kwargs=(;info_level=-1))
 
     ## Make operators.
     observers = get_multi_time_observer(params.observation)
@@ -118,9 +118,11 @@ function ground_truth_stem(params)
     return string(hash(params.ground_truth); base=62)
 end
 
-function produce_or_load_ground_truth(params::JutulJUDIFilterOptions; kwargs...)
+function produce_or_load_ground_truth(params::JutulJUDIFilterOptions; filestem=nothing, kwargs...)
     params_gt = params.ground_truth
-    filestem = ground_truth_stem(params)
+    if isnothing(filestem)
+        filestem = ground_truth_stem(params)
+    end
 
     params_file = datadir("ground_truth", "params", "$filestem.jld2")
     wsave(params_file; params=params_gt)
@@ -134,7 +136,7 @@ function produce_or_load_ground_truth(params::JutulJUDIFilterOptions; kwargs...)
         params_gt,
         savedir;
         filename=filestem,
-        verbose=false,
+        verbose=true,
         tag=false,
         loadfile=false,
         kwargs...,

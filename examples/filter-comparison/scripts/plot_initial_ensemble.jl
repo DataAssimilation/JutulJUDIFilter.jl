@@ -25,7 +25,7 @@ ensemble = data_ensemble["ensemble"]
 save_dir_root = plotsdir("initial_ensemble", "states", filestem_ensemble)
 
 with_theme(theme_latexfonts()) do
-    update_theme!(; fontsize=30)
+    update_theme!(; fontsize=24)
     plot_states(
         1:length(ensemble.members), ensemble.members, params.ground_truth; save_dir_root
     )

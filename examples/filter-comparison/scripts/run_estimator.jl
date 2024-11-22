@@ -54,7 +54,7 @@ function run_estimator(params)
     K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
     JMT = JutulModelTranslator(K)
 
-    M = JutulModel(; translator=JMT, options=params_estimator.transition)
+    M = JutulModel(; translator=JMT, options=params_estimator.transition, kwargs=(;info_level=-1))
     observers = get_multi_time_observer(params_estimator.observation)
 
     # Initialize member for all primary variables in simulation.
@@ -89,9 +89,11 @@ function filter_stem(params)
            string(hash(params.estimator); base=62)
 end
 
-function produce_or_load_run_estimator(params; kwargs...)
+function produce_or_load_run_estimator(params; filestem=nothing, kwargs...)
     params_estimator = params.estimator
-    filestem = filter_stem(params)
+    if isnothing(filestem)
+        filestem = filter_stem(params)
+    end
 
     params_file = datadir("estimator", "params", "$filestem.jld2")
     wsave(params_file; params=params_estimator)
@@ -105,7 +107,7 @@ function produce_or_load_run_estimator(params; kwargs...)
         params,
         savedir;
         filename=filestem,
-        verbose=false,
+        verbose=true,
         tag=false,
         loadfile=false,
         kwargs...,
