@@ -1,15 +1,4 @@
 
-macro codegen_copy_constructor(T)
-    esc(
-        quote
-            function $T(x::$T; kwargs...)
-                default_kwargs = (f => getfield(x, f) for f in fieldnames($T))
-                return $T(; default_kwargs..., kwargs...)
-            end
-        end,
-    )
-end
-
 if isinteractive()
     using Pkg: Pkg
     try

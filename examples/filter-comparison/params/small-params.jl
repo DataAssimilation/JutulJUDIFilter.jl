@@ -30,7 +30,6 @@ simple_system = CO2BrineSimpleOptions(;
 
 params_transition = JutulOptions(;
     mesh=MeshOptions(; n=(25, 1, 25), d=(162.5, 1e2, 86.25)),
-    # system=complex_system,
     system=simple_system,
     porosity=FieldOptions(0.25),
     permeability=FieldOptions(0.1Darcy),
@@ -85,8 +84,8 @@ params = JutulJUDIFilterOptions(;
             Saturation=GaussianPriorOptions(; mean=0, std=0),
             Permeability=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass/broad&narrow_perm_models_new.jld2",
-                    key="BroadK",
+                    file="/opt/SLIM-Storage/compass_small/perm_poro.jld2",
+                    key="Ks",
                     scale=mD_to_meters2,
                     resize=true,
                 ),

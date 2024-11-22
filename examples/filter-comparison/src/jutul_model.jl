@@ -118,7 +118,7 @@ function member_to_sim!(M, T::JutulModelTranslator{K}, member, state) where {K<:
     end
 end
 
-mutable struct JutulModel6{K} <: AbstractOperator
+mutable struct JutulModel{K} <: AbstractOperator
     translator::JutulModelTranslator{K}
     options
     kwargs
@@ -132,13 +132,12 @@ mutable struct JutulModel6{K} <: AbstractOperator
     model
     parameters
 end
-JutulModel = JutulModel6
 
 function JutulDarcy.setup_reservoir_state(model, options::CO2BrineSimpleOptions; kwargs...)
     return state0 = setup_reservoir_state(model; kwargs...)
 end
 
-function JutulModel6(; options, translator, kwargs=(;))
+function JutulModel(; options, translator, kwargs=(;))
     mesh = CartesianMesh(options.mesh)
     domain = reservoir_domain(mesh, options)
     wells = setup_well(domain, options.injection)

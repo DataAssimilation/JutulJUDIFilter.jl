@@ -36,7 +36,7 @@ params_transition = JutulOptions(;
     # permeability=FieldOptions(0.1Darcy),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;
-            file="compass/broad&narrow_perm_models_new.jld2",
+            file="compass_small/75x75.jld2",
             key="K",
             scale=mD_to_meters2,
             resize=true,
@@ -77,27 +77,27 @@ observer_options = SeismicCO2ObserverOptions(;
             type=:squared_slowness,
             field=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass/BGCompass_tti_625m.jld2", key="m", scale=1e-6, resize=true
+                    file="compass_small/75x75.jld2", key="m", scale=1e-6, resize=true
                 ),
             ),
         ),
         density=FieldOptions(;
             suboptions=FieldFileOptions(;
-                file="compass/BGCompass_tti_625m.jld2", key="rho", scale=1e3, resize=true
+                file="compass_small/75x75.jld2", key="rho", scale=1e3, resize=true
             ),
         ),
         background_velocity=BackgroundBlurOptions(; cells=10.0),
         background_density=BackgroundBlurOptions(; cells=10.0),
         mesh=MeshOptions(; n=(75, 75), d=(55, 25)),
         source_receiver_geometry=SourceReceiverGeometryOptions(;
-            nsrc=2, nrec=50, setup_type=:surface
+            nsrc=4, nrec=50, setup_type=:surface
         ),
         seed=0xb874e67219a0aba4,
         depth_scaling_exponent=1,
         snr=20.0,
     ),
     rock_physics=RockPhysicsModelOptions(; porosity=FieldOptions(0.25)),
-    save_intermediate=true,
+    # save_intermediate=true,
 )
 
 ground_truth = ModelOptions(;
@@ -116,7 +116,7 @@ ground_truth = ModelOptions(;
 params = JutulJUDIFilterOptions(;
     ground_truth,
     ensemble=EnsembleOptions(;
-        size=2,
+        size=4,
         seed=9347215,
         mesh=params_transition.mesh,
         permeability_v_over_h=0.36,
@@ -124,8 +124,8 @@ params = JutulJUDIFilterOptions(;
             Saturation=GaussianPriorOptions(; mean=0, std=0),
             Permeability=FieldOptions(;
                 suboptions=FieldFileOptions(;
-                    file="compass/broad&narrow_perm_models_new.jld2",
-                    key="BroadK",
+                    file="compass_small/75x75.jld2",
+                    key="Ks",
                     scale=mD_to_meters2,
                     resize=true,
                 ),

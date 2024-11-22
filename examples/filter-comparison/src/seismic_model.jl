@@ -295,8 +295,6 @@ function (M::SeismicModel)(vel, rho, ::Val{:born_shot_rtm_depth_noise})
     rtm = deepcopy(rtm)
 
     dshot_noisy = dshot + generate_noise(M, dshot, M.snr) .* norm(dshot)
-    println("Noise norm: $(norm(dshot_noisy - dshot))")
-    println("SNR: $(M.snr)")
     rtm_noisy = M(dshot_noisy, Val(:rtm))
 
     dshot_noisy = deepcopy(dshot_noisy)
