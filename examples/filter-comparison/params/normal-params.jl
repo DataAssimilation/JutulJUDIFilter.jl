@@ -38,7 +38,10 @@ params_transition = JutulOptions(;
     # permeability=FieldOptions(0.1Darcy),
     permeability=FieldOptions(;
         suboptions=FieldFileOptions(;
-            file="/opt/SLIM-Storage/compass_small/perm_poro.jld2", key="K", scale=mD_to_meters2, resize=true
+            file="/opt/SLIM-Storage/compass_small/perm_poro.jld2",
+            key="K",
+            scale=mD_to_meters2,
+            resize=true,
         ),
     ),
     permeability_v_over_h=0.36,

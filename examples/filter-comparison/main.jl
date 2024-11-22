@@ -96,7 +96,9 @@ YAML.write_file(params_file, to_dict(params_gt, YAMLStyle))
 println(YAML.write(to_dict(params_gt.transition, YAMLStyle)))
 
 # ### Observation parameters
-println("Observation times (seconds): $([o.first for o in params_gt.observation.observers])")
+println(
+    "Observation times (seconds): $([o.first for o in params_gt.observation.observers])"
+)
 println()
 println(YAML.write(to_dict(params_gt.observation.observers[1].second, YAMLStyle)))
 
@@ -107,12 +109,7 @@ println(YAML.write(to_dict(params_gt.observation.observers[1].second, YAMLStyle)
 # `generate_ground_truth` defined in `scripts/generate_ground_truth.jl`.
 savedir = datadir("ground_truth", "data")
 data_gt, filepath = produce_or_load(
-    generate_ground_truth,
-    params_gt,
-    savedir;
-    filename=filestem,
-    verbose=true,
-    force=false,
+    generate_ground_truth, params_gt, savedir; filename=filestem, verbose=true, force=false
 )
 states = data_gt["states"]
 observations = data_gt["observations"]
@@ -143,7 +140,7 @@ function Makie.resize_to_layout!(fig, content_layout)
     Makie.update_state_before_display!(fig)
     bbox = Makie.GridLayoutBase.tight_bbox(content_layout)
     new_size = (widths(bbox)...,)
-    resize!(fig.scene, widths(bbox)...)
+    return resize!(fig.scene, widths(bbox)...)
 end
 grid_2d = get_2d_plotting_mesh(params_gt.transition.mesh)
 
@@ -153,8 +150,13 @@ grid_2d = get_2d_plotting_mesh(params_gt.transition.mesh)
 fig = Figure()
 data = states[1][:Permeability]
 @show size(data)
-content_layout = GridLayout(fig[1,1])
-plot_scalar_field(content_layout, Observable(data[1, :]); grid_2d, heatmap_kwargs=(; colormap=Reverse(:Purples)))
+content_layout = GridLayout(fig[1, 1])
+plot_scalar_field(
+    content_layout,
+    Observable(data[1, :]);
+    grid_2d,
+    heatmap_kwargs=(; colormap=Reverse(:Purples)),
+)
 resize_to_layout!(fig, content_layout)
 fig
 
@@ -163,14 +165,16 @@ fig
 fig = Figure()
 t_idx = Observable(1)
 data = @lift(states[$t_idx][:Saturation])
-content_layout = GridLayout(fig[1,1])
-ax = plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
-    
+content_layout = GridLayout(fig[1, 1])
+ax = plot_scalar_field(
+    content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0, 1), colormap=parula)
+)
+
 label = lift(t_idx -> "Saturation at time step $(t_idx)", t_idx)
-Label(fig[1,1, Top()], label)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:length(states); framerate = 1) do i
+Record(fig, 1:length(states); framerate=1) do i
     t_idx[] = i
 end
 
@@ -178,14 +182,19 @@ end
 fig = Figure()
 t_idx = Observable(1)
 data = @lift(states[$t_idx][:Pressure] .- states[1][:Pressure])
-content_layout = GridLayout(fig[1,1])
-plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)))
-    
+content_layout = GridLayout(fig[1, 1])
+plot_scalar_field(
+    content_layout,
+    data;
+    grid_2d,
+    heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)),
+)
+
 label = lift(t_idx -> "Pressure difference at time step $(t_idx)", t_idx)
-Label(fig[1,1, Top()], label)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:length(states); framerate = 1) do i
+Record(fig, 1:length(states); framerate=1) do i
     t_idx[] = i
 end
 
@@ -193,14 +202,19 @@ end
 fig = Figure()
 t_idx = Observable(1)
 data = @lift(observations[$t_idx][:rtm] .- observations[1][:rtm])
-content_layout = GridLayout(fig[1,1])
-plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)))
-    
+content_layout = GridLayout(fig[1, 1])
+plot_scalar_field(
+    content_layout,
+    data;
+    grid_2d,
+    heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)),
+)
+
 label = lift(t_idx -> "Time-lapse RTM at time step $(t_idx)", t_idx)
-Label(fig[1,1, Top()], label)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:length(states); framerate = 1) do i
+Record(fig, 1:length(states); framerate=1) do i
     t_idx[] = i
 end
 
@@ -211,17 +225,26 @@ function dshot_diff(state)
     return [d .- d0 for (d0, d) in zip(observations[1][:dshot], state[:dshot])]
 end
 data = @lift(dshot_diff(observations[$t_idx]))
-content_layout = GridLayout(fig[1,1])
+content_layout = GridLayout(fig[1, 1])
 timeR = @lift(params_gt.observation.observers[$t_idx].second.seismic.timeR)
 dtR = @lift(params_gt.observation.observers[$t_idx].second.seismic.dtR)
 nsrc = params_gt.observation.observers[1].second.seismic.source_receiver_geometry.nsrc
-plot_data(content_layout, data, nothing, :dshot; heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)), nsrc, timeR, dtR)
-    
+plot_data(
+    content_layout,
+    data,
+    nothing,
+    :dshot;
+    heatmap_kwargs=(; make_divergent=true, colormap=Reverse(:RdBu)),
+    nsrc,
+    timeR,
+    dtR,
+)
+
 label = lift(t_idx -> "Time-lapse shot data at time step $(t_idx)", t_idx)
-Label(fig[1,1, Top()], label)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content(content_layout[1, 1][2, 1]))
 
-Record(fig, 1:length(states); framerate = 1) do i
+Record(fig, 1:length(states); framerate=1) do i
     t_idx[] = i
 end
 
@@ -260,14 +283,16 @@ println()
 fig = Figure()
 e_idx = Observable(1)
 data = @lift(ensemble.members[$e_idx][:Permeability][1, :])
-content_layout = GridLayout(fig[1,1])
-plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colormap=Reverse(:Purples)))
-    
+content_layout = GridLayout(fig[1, 1])
+plot_scalar_field(
+    content_layout, data; grid_2d, heatmap_kwargs=(; colormap=Reverse(:Purples))
+)
+
 label = lift(e_idx -> "Permeability sample $(e_idx)", e_idx)
-Label(fig[1,1, Top()], label)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:min(length(ensemble.members), 64); framerate = 2) do i
+Record(fig, 1:min(length(ensemble.members), 64); framerate=2) do i
     e_idx[] = i
 end
 
@@ -275,14 +300,16 @@ end
 fig = Figure()
 e_idx = Observable(1)
 data = @lift(ensemble.members[$e_idx][:Saturation])
-content_layout = GridLayout(fig[1,1])
-ax = plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
-    
+content_layout = GridLayout(fig[1, 1])
+ax = plot_scalar_field(
+    content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0, 1), colormap=parula)
+)
+
 label = lift(e_idx -> "Saturation sample $(e_idx)", e_idx)
-Label(fig[1,1, Top()], label)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:min(length(ensemble.members), 64); framerate = 2) do i
+Record(fig, 1:min(length(ensemble.members), 64); framerate=2) do i
     e_idx[] = i
 end
 
@@ -312,9 +339,13 @@ end
 if params.estimator.observation == params.ground_truth.observation
     println("Same observation parameters as ground truth.")
 else
-    println("Observation times (seconds): $([o.first for o in params.estimator.observation.observers])")
+    println(
+        "Observation times (seconds): $([o.first for o in params.estimator.observation.observers])",
+    )
     println()
-    println(YAML.write(to_dict(params.estimator.observation.observers[1].second, YAMLStyle)))
+    println(
+        YAML.write(to_dict(params.estimator.observation.observers[1].second, YAMLStyle))
+    )
 end
 
 # ### Run assimilation loop
@@ -333,7 +364,9 @@ K = (Val(:Saturation), Val(:Pressure), Val(:Permeability))
 JMT = JutulModelTranslator(K)
 
 ## Create transitioner.
-M = JutulModel(; translator=JMT, options=params.estimator.transition, kwargs=(;info_level=-1))
+M = JutulModel(;
+    translator=JMT, options=params.estimator.transition, kwargs=(; info_level=-1)
+)
 
 ## Create observers.
 observers = get_multi_time_observer(params.estimator.observation)
@@ -361,13 +394,13 @@ data_estimator = filter_loop(
     observers,
     observations_gt;
     name=get_short_name(params.estimator.algorithm),
-    max_transition_step = params.estimator.max_transition_step,
+    max_transition_step=params.estimator.max_transition_step,
     assimilation_obs_keys=params.estimator.assimilation_obs_keys,
 )
 savedir = datadir("estimator", "data")
 mkpath(savedir)
-let data=data_estimator
-    data = Dict(Symbol(k) => v for (k,v) in data)
+let data = data_estimator
+    data = Dict(Symbol(k) => v for (k, v) in data)
     jldsave(joinpath(savedir, "tutorial-estimator.jld2"); data...)
 end
 
@@ -385,14 +418,18 @@ t_idx = Observable(1)
 state_times = data_estimator["state_times"]
 states_estimator = data_estimator["state_means"]
 data = @lift(states_estimator[$t_idx][:Saturation])
-content_layout = GridLayout(fig[1,1])
-ax = plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
+content_layout = GridLayout(fig[1, 1])
+ax = plot_scalar_field(
+    content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0, 1), colormap=parula)
+)
 
-label = lift(t_idx -> "Estimated saturation at year $(state_times[t_idx]/365.2425/24/3600)", t_idx)
-Label(fig[1,1, Top()], label)
+label = lift(
+    t_idx -> "Estimated saturation at year $(state_times[t_idx]/365.2425/24/3600)", t_idx
+)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:length(states_estimator); framerate = 1) do i
+Record(fig, 1:length(states_estimator); framerate=1) do i
     t_idx[] = i
 end
 
@@ -403,14 +440,19 @@ fig = Figure()
 t_idx = Observable(1)
 state_estimator_stds = [std(ensemble) for ensemble in data_estimator["states"]]
 data = @lift(state_estimator_stds[$t_idx][:Saturation])
-content_layout = GridLayout(fig[1,1])
-ax = plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
+content_layout = GridLayout(fig[1, 1])
+ax = plot_scalar_field(
+    content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0, 1), colormap=parula)
+)
 
-label = lift(t_idx -> "Estimated saturation std at year $(state_times[t_idx]/365.2425/24/3600)", t_idx)
-Label(fig[1,1, Top()], label)
+label = lift(
+    t_idx -> "Estimated saturation std at year $(state_times[t_idx]/365.2425/24/3600)",
+    t_idx,
+)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:length(states_estimator); framerate = 1) do i
+Record(fig, 1:length(states_estimator); framerate=1) do i
     t_idx[] = i
 end
 
@@ -436,7 +478,12 @@ using Ensembles:
     Ensembles, Ensemble, get_ensemble_matrix, get_ensemble_dicts, get_member_vector
 
 function Ensembles.assimilate_data(
-    estimator::MyEstimator, ensemble, ensemble_obs_clean, ensemble_obs_noisy, y_obs, log_data
+    estimator::MyEstimator,
+    ensemble,
+    ensemble_obs_clean,
+    ensemble_obs_noisy,
+    y_obs,
+    log_data,
 )
     X = Float64.(get_ensemble_matrix(ensemble))
     Y = Float64.(get_ensemble_matrix(ensemble_obs_noisy))
@@ -472,11 +519,11 @@ data_custom = filter_loop(
     observers,
     observations_gt;
     name=string(custom_estimator),
-    max_transition_step = params.estimator.max_transition_step,
+    max_transition_step=params.estimator.max_transition_step,
     assimilation_obs_keys=params.estimator.assimilation_obs_keys,
 )
-let data=data_custom
-    data = Dict(Symbol(k) => v for (k,v) in data)
+let data = data_custom
+    data = Dict(Symbol(k) => v for (k, v) in data)
     jldsave(joinpath(savedir, "tutorial-custom.jld2"); data...)
 end
 
@@ -486,14 +533,20 @@ t_idx = Observable(1)
 state_times = data_custom["state_times"]
 states_custom = data_custom["state_means"]
 data = @lift(states_custom[$t_idx][:Saturation])
-content_layout = GridLayout(fig[1,1])
-ax = plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
+content_layout = GridLayout(fig[1, 1])
+ax = plot_scalar_field(
+    content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0, 1), colormap=parula)
+)
 
-label = lift(t_idx -> "$(custom_estimator) saturation at year $(state_times[t_idx]/365.2425/24/3600)", t_idx)
-Label(fig[1,1, Top()], label)
+label = lift(
+    t_idx ->
+        "$(custom_estimator) saturation at year $(state_times[t_idx]/365.2425/24/3600)",
+    t_idx,
+)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:length(states_custom); framerate = 1) do i
+Record(fig, 1:length(states_custom); framerate=1) do i
     t_idx[] = i
 end
 
@@ -502,14 +555,20 @@ fig = Figure()
 t_idx = Observable(1)
 state_custom_stds = [std(ensemble) for ensemble in data_custom["states"]]
 data = @lift(state_custom_stds[$t_idx][:Saturation])
-content_layout = GridLayout(fig[1,1])
-ax = plot_scalar_field(content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0,1), colormap=parula))
+content_layout = GridLayout(fig[1, 1])
+ax = plot_scalar_field(
+    content_layout, data; grid_2d, heatmap_kwargs=(; colorrange=(0, 1), colormap=parula)
+)
 
-label = lift(t_idx -> "$(custom_estimator) saturation std at year $(state_times[t_idx]/365.2425/24/3600)", t_idx)
-Label(fig[1,1, Top()], label)
+label = lift(
+    t_idx ->
+        "$(custom_estimator) saturation std at year $(state_times[t_idx]/365.2425/24/3600)",
+    t_idx,
+)
+Label(fig[1, 1, Top()], label)
 resize_to_layout!(fig, content_layout)
 
-Record(fig, 1:length(state_custom_stds); framerate = 1) do i
+Record(fig, 1:length(state_custom_stds); framerate=1) do i
     t_idx[] = i
 end
 
