@@ -39,7 +39,7 @@ function gen_runner_code(pth, in_dir, out_dir)
 
            include($(joinpath(@__DIR__, "utils.jl") |> repr))
 
-           preprocess(content) = update_header(content, $(repr(pth)); build_notebooks, build_scripts)
+           preprocess(content) = add_extra_info(content, $(repr(pth)); build_notebooks, build_scripts)
            in_pth = joinpath(in_dir, "main.jl")
 
            # Build outputs.
@@ -77,26 +77,6 @@ build_scripts = true
 examples = ["Small example" => "filter-comparison"]
 examples_markdown = []
 
-function update_header(content, pth)
-    links = []
-    if build_notebooks
-        push!(links, "[Jupyter notebook](main.ipynb)")
-    end
-    if build_scripts
-        push!(links, "[plain script](main.jl)")
-    end
-    if length(links) == 0
-        return content
-    end
-    project_link = "[Project.toml](Project.toml)"
-    return """
-        # # Reproducing example
-        # The packages for this example are documented in the $project_link.
-        # # Accessing example
-        # This can also be accessed as a $(join(links, ", a", ", or a ")).
-    """ * content
-end
-
 mkpath(joinpath(DOC_STAGE, "examples"))
 for (ex, pth) in examples
     in_dir = joinpath(REPO_ROOT, "examples", pth)
@@ -115,8 +95,10 @@ for (ex, pth) in examples
 
         @info "Testing  $(repr(ex)) at $(repr(pth)) with \"$(runner_path)\""
 
-        proc = open(cmd, Base.stdout; write=true)
-        wait(proc)
+        @time begin
+            proc = open(cmd, Base.stdout; write=true)
+            wait(proc)
+        end
         if proc.exitcode != 0
             error("Failed to build example $(repr(ex)) at $(repr(pth))")
         end
@@ -138,7 +120,7 @@ makedocs(;
         canonical="https://DataAssimilation.github.io/JutulJUDIFilter.jl",
         edit_link="main",
         assets=String[],
-        size_threshold=2 * 2^20,
+        size_threshold=20 * 2^20,
     ),
     repo="github.com/DataAssimilation/JutulJUDIFilter.jl",
     pages=[

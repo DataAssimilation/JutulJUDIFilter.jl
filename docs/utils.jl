@@ -1,4 +1,4 @@
-function update_header(content, pth; build_notebooks, build_scripts)
+function add_extra_info(content, pth; build_notebooks, build_scripts)
     links = []
     if build_notebooks
         push!(links, "[Jupyter notebook](main.ipynb)")
@@ -10,10 +10,10 @@ function update_header(content, pth; build_notebooks, build_scripts)
         return content
     end
     project_link = "[Project.toml](Project.toml)"
-    return """
-        # # Reproducing example
-        # The packages for this example are documented in the $project_link.
-        # # Accessing example
+    return content * """
+        # # Alternative format
         # This can also be accessed as a $(join(links, ", a", ", or a ")).
-    """ * content
+        #
+        # Notebook viewer may work [here](https://nbviewer.org/urls/dataassimilation.github.io/JutulJUDIFilter.jl/$(joinpath("examples", pth, "main.ipynb")))
+    """
 end

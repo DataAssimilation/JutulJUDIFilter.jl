@@ -25,11 +25,8 @@ function filter_loop(
     state_times = []
     observation_times = []
     state_means = []
-    # state_stds = []
     observation_means = []
-    # observation_stds = []
     observation_clean_means = []
-    # observation_clean_stds = []
     progress_name = name * ": "
     state_keys = collect(keys(ensemble.members[1]))
     @time begin
@@ -51,14 +48,12 @@ function filter_loop(
                             @logprogress t0 / tf
                             push!(states, deepcopy(ensemble))
                             push!(state_means, mean(ensemble; state_keys=state_keys))
-                            # push!(state_stds, std(ensemble;  state_keys=state_keys))
                             push!(state_times, t0)
                         end
                     end
                     ensemble = transitioner(ensemble, t0, t; inplace=true)
                     push!(states, deepcopy(ensemble))
                     push!(state_means, mean(ensemble; state_keys=state_keys))
-                    # push!(state_stds, std(ensemble;  state_keys=state_keys))
                     push!(state_times, t)
                 end
 
@@ -86,9 +81,7 @@ function filter_loop(
 
                 ## Record.
                 push!(observation_means, mean(ensemble_obs))
-                # push!(observation_stds, std(ensemble_obs))
                 push!(observation_clean_means, mean(ensemble_obs_clean))
-                # push!(observation_clean_stds, std(ensemble_obs_clean))
                 push!(observation_times, t)
                 push!(observations_clean, deepcopy(ensemble_obs_clean))
                 push!(observations, deepcopy(ensemble_obs_noisy))
@@ -110,7 +103,6 @@ function filter_loop(
                     push!(logs, log_data)
                     push!(states, deepcopy(ensemble))
                     push!(state_means, mean(ensemble; state_keys=state_keys))
-                    # push!(state_stds, std(ensemble;  state_keys=state_keys))
                     push!(state_times, t)
                 end
                 @logprogress t0 / tf
@@ -122,12 +114,9 @@ function filter_loop(
     data = Dict(
         "states" => states,
         "state_means" => state_means,
-        # "state_stds" => state_stds,
         "state_times" => state_times,
         "observation_means" => observation_means,
-        # "observation_stds" => observation_stds,
         "observation_clean_means" => observation_clean_means,
-        # "observation_clean_stds" => observation_clean_stds,
         "observation_times" => observation_times,
         "observations_clean" => observations_clean,
         "observations" => observations,
