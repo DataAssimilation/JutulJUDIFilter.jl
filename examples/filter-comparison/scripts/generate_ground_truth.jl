@@ -40,7 +40,7 @@ function generate_ground_truth(params)
     ## Set seed for ground-truth simulation.
     Random.seed!(0xabceabd47cada8f4)
 
-    M = JutulModel(; translator=JMT, options=params.transition, kwargs=(;info_level=-1))
+    M = JutulModel(; translator=JMT, options=params.transition, kwargs=(; info_level=-1))
 
     ## Make operators.
     observers = get_multi_time_observer(params.observation)
@@ -118,7 +118,9 @@ function ground_truth_stem(params)
     return string(hash(params.ground_truth); base=62)
 end
 
-function produce_or_load_ground_truth(params::JutulJUDIFilterOptions; filestem=nothing, kwargs...)
+function produce_or_load_ground_truth(
+    params::JutulJUDIFilterOptions; filestem=nothing, kwargs...
+)
     params_gt = params.ground_truth
     if isnothing(filestem)
         filestem = ground_truth_stem(params)
