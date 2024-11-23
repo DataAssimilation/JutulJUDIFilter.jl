@@ -51,27 +51,6 @@ if get(ENV, "jutuljudifilter_force_install", "false") == "true" ||
         Ensembles.install(:NormalizingFlowFilters)
     end
 
-    Pkg.add([
-        "CairoMakie",
-        "ChainRulesCore",
-        "Configurations",
-        "DrWatson",
-        "Format",
-        "ImageFiltering",
-        "ImageTransformations",
-        "JLD2",
-        "JUDI",
-        "JutulDarcy",
-        "LinearAlgebra",
-        "Logging",
-        "Makie",
-        "ProgressLogging",
-        "Random",
-        "Statistics",
-        "TerminalLoggers",
-        "YAML",
-    ])
-
     Pkg.instantiate()
 end
 
