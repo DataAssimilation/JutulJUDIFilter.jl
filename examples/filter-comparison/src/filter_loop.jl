@@ -52,6 +52,7 @@ function filter_loop(
                         end
                     end
                     ensemble = transitioner(ensemble, t0, t; inplace=true)
+                    t0 = t
                     push!(states, deepcopy(ensemble))
                     push!(state_means, mean(ensemble; state_keys=state_keys))
                     push!(state_times, t)
