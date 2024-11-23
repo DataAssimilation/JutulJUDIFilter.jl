@@ -49,7 +49,7 @@ jobs:
           submodules: recursive
       - uses: julia-actions/setup-julia@v2
         with:
-          version: '1'
+          version: '1.10'
       - uses: julia-actions/cache@v2
       - name: Setup LCOV
         run: (command -V genhtml || sudo apt-get -y install lcov) && genhtml --version
