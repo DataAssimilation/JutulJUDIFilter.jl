@@ -32,12 +32,12 @@ function gen_runner_code(pth, in_dir, out_dir)
            end
 
            using Literate
+           include($(joinpath(@__DIR__, "utils.jl") |> repr))
 
            # Copy other files over to out_dir.
-           Base.Filesystem.cptree(in_dir, out_dir)
+           cptree_hidden(in_dir, out_dir; include_hidden=false)
            rm(joinpath(out_dir, "main.jl"))
 
-           include($(joinpath(@__DIR__, "utils.jl") |> repr))
 
            preprocess(content) = add_extra_info(content, $(repr(pth)); build_notebooks, build_scripts)
            in_pth = joinpath(in_dir, "main.jl")
