@@ -18,11 +18,15 @@ function add_extra_info(content, pth; build_notebooks, build_scripts)
     """
 end
 
-using Base.Filesystem: checkfor_mv_cp_cptree, mkdir, readdir, islink, symlink, readlink, sendfile
-function cptree_regex(src::String, dst::String;
-                                          follow_symlinks::Bool=false,
-                                          ignore_hidden::Bool=false,
-                                          match::Union{Nothing, Regex}=nothing)
+using Base.Filesystem:
+    checkfor_mv_cp_cptree, mkdir, readdir, islink, symlink, readlink, sendfile
+function cptree_regex(
+    src::String,
+    dst::String;
+    follow_symlinks::Bool=false,
+    ignore_hidden::Bool=false,
+    match::Union{Nothing,Regex}=nothing,
+)
     isdir(src) || throw(ArgumentError("'$src' is not a directory. Use `cp(src, dst)`"))
     for name in readdir(src)
         if ignore_hidden && name[1] == '.'
@@ -35,7 +39,9 @@ function cptree_regex(src::String, dst::String;
                 symlink(readlink(srcname), joinpath(dst, name))
             end
         elseif isdir(srcname)
-            cptree_regex(srcname, joinpath(dst, name); follow_symlinks, ignore_hidden, match)
+            cptree_regex(
+                srcname, joinpath(dst, name); follow_symlinks, ignore_hidden, match
+            )
         else
             check = isnothing(match) || occursin(match, srcname)
             if check
@@ -45,5 +51,6 @@ function cptree_regex(src::String, dst::String;
         end
     end
 end
-cptree_regex(src::AbstractString, dst::AbstractString; kwargs...) =
-    cptree_regex(String(src)::String, String(dst)::String; kwargs...)
+function cptree_regex(src::AbstractString, dst::AbstractString; kwargs...)
+    return cptree_regex(String(src)::String, String(dst)::String; kwargs...)
+end
