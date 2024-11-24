@@ -87,8 +87,11 @@ observer_options = SeismicCO2ObserverOptions(;
         background_density=BackgroundBlurOptions(; cells=10.0),
         mesh=MeshOptions(; n=(75, 75), d=(55, 25)),
         source_receiver_geometry=SourceReceiverGeometryOptions(;
-            nsrc=4, nrec=50, setup_type=:surface
+            nsrc=3, nrec=50, setup_type=:surface
         ),
+        timeR = 1800.0,
+        dtR = 4.0,
+        f0 = 0.024, 
         seed=0xb874e67219a0aba4,
         depth_scaling_exponent=1,
         snr=20.0,
@@ -104,7 +107,6 @@ ground_truth = ModelOptions(;
             0yr => observer_options,
             1yr => observer_options,
             2yr => observer_options,
-            3yr => observer_options,
         ),
     ),
     # max_transition_step = 0.1yr,
