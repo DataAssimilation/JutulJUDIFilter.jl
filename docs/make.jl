@@ -3,6 +3,7 @@ using JutulJUDIFilter
 using Documenter
 
 using Literate
+include("utils.jl")
 
 const REPO_ROOT = joinpath(@__DIR__, "..")
 const DOC_SRC = joinpath(@__DIR__, "src")
@@ -37,7 +38,6 @@ function gen_runner_code(pth, in_dir, out_dir)
             # Copy other files over to out_dir.
             Base.Filesystem.cptree(in_dir, out_dir)
             rm(joinpath(out_dir, "main.jl"))
-
 
             preprocess(content) = add_extra_info(content, $(repr(pth)); build_notebooks, build_scripts)
             in_pth = joinpath(in_dir, "main.jl")
@@ -100,7 +100,7 @@ for (ex, pth) in examples
         end
         cmd = `$(Base.julia_cmd()) -- "$(runner_path)"`
 
-        @info "Testing  $(repr(ex)) at $(repr(pth)) with \"$(runner_path)\""
+        @info "Testing  $(repr(ex)) at $(repr(pth)) with \"$(runner_path)\"\ncmd = $cmd"
 
         @time begin
             proc = open(cmd, Base.stdout; write=true)
@@ -109,6 +109,9 @@ for (ex, pth) in examples
         if proc.exitcode != 0
             error("Failed to build example $(repr(ex)) at $(repr(pth))")
         end
+
+        # Copy coverage files back to in_dir.
+        cptree_regex(out_dir, in_dir; match=r".*\.cov$")
     end
 end
 
