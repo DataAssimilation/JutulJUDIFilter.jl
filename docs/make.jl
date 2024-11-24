@@ -11,45 +11,52 @@ const DOC_BUILD = joinpath(@__DIR__, "build")
 
 function gen_runner_code(pth, in_dir, out_dir)
     return runner_code = """
-           using Pkg: Pkg
+            using Pkg: Pkg
 
-           build_scripts = $build_scripts
-           build_notebooks = $build_notebooks
-           in_dir = $(repr(in_dir))
-           out_dir = $(repr(out_dir))
+            build_scripts = $build_scripts
+            build_notebooks = $build_notebooks
+            in_dir = $(repr(in_dir))
+            out_dir = $(repr(out_dir))
 
-           Pkg.activate(in_dir)
-           Pkg.develop(; path=$(joinpath(@__DIR__, "..") |> repr))
-           Pkg.add(["Literate", "Logging"])
-           Pkg.resolve()
-           Pkg.instantiate()
+            Pkg.activate(in_dir)
+            Pkg.develop(; path=$(joinpath(@__DIR__, "..") |> repr))
+            Pkg.add(["Literate", "Logging"])
+            Pkg.resolve()
+            Pkg.instantiate()
 
-           using Logging: global_logger
-           orig_logger = global_logger()
-           function postprocess(content)
-               global_logger(orig_logger)
-               return content
-           end
+            using Logging: global_logger
+            orig_logger = global_logger()
+            function postprocess(content)
+                global_logger(orig_logger)
+                return content
+            end
 
-           using Literate
-           include($(joinpath(@__DIR__, "utils.jl") |> repr))
+            using Literate
+            include($(joinpath(@__DIR__, "utils.jl") |> repr))
 
-           # Copy other files over to out_dir.
-           cptree_hidden(in_dir, out_dir; include_hidden=false)
-           rm(joinpath(out_dir, "main.jl"))
+            # Copy other files over to out_dir.
+            Base.Filesystem.cptree(in_dir, out_dir)
+            rm(joinpath(out_dir, "main.jl"))
 
 
-           preprocess(content) = add_extra_info(content, $(repr(pth)); build_notebooks, build_scripts)
-           in_pth = joinpath(in_dir, "main.jl")
+            preprocess(content) = add_extra_info(content, $(repr(pth)); build_notebooks, build_scripts)
+            in_pth = joinpath(in_dir, "main.jl")
 
-           # Build outputs.
-           Literate.markdown(in_pth, out_dir; name="index", preprocess, postprocess, execute=true)
-           if build_notebooks
-               Literate.notebook(in_pth, out_dir; execute=false)
-           end
-           if build_scripts
-               Literate.script(in_pth, out_dir)
-           end
+            # Build outputs.
+            Literate.markdown(in_pth, out_dir; name="index", preprocess, postprocess, execute=true)
+            if build_notebooks
+                Literate.notebook(in_pth, out_dir; execute=false)
+            end
+            if build_scripts
+                Literate.script(in_pth, out_dir)
+            end
+
+            # Remove hidden files.
+            for name in readdir(out_dir)
+                if name[1] == '.'
+                    rm(joinpath(out_dir, name); force=true, recursive=true)
+                end
+            end
            """
 end
 
