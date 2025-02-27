@@ -7,6 +7,7 @@ using Logging: global_logger
 isinteractive() && global_logger(TerminalLogger())
 using ProgressLogging: @withprogress, @logprogress
 
+using Makie: with_theme, theme_latexfonts, update_theme!
 using DrWatson: srcdir, datadir, plotsdir, produce_or_load, wsave, projectdir, scriptsdir
 using CairoMakie: Label
 using Format: cfmt

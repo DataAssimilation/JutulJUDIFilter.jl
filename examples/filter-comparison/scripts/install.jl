@@ -4,8 +4,8 @@ if isinteractive()
     try
         using Revise
     catch
-        using Revise
         Pkg.add("Revise")
+        using Revise
     end
 end
 
