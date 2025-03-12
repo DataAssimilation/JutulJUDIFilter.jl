@@ -17,17 +17,40 @@ end
 export MultiTimeObserver
 struct MultiTimeObserver{T}
     times_observers::Vector{Pair{T,Any}}
+    times_observers_dict::Dict{T,Vector{Any}}
     times::Vector{T}
     observers::Vector
     unique_times::Vector{T}
 end
 
 function MultiTimeObserver(times_observers::Vector{Pair{Float64,Any}})
+    unique_times, times, observers = get_observation_times!(times_observers)
+    times_observers_dict = Dict{Float64,Vector{Any}}(t => [] for t in unique_times)
+    for (t, o) in times_observers
+        push!(times_observers_dict[t], o)
+    end
+    return MultiTimeObserver(times_observers, times_observers_dict, times, observers, unique_times)
+end
+
+export get_observation_times
+function get_observation_times!(times_observers::Vector{Pair{Float64,Any}})
     sort!(times_observers; by=to -> to.first)
     times = [to.first for to in times_observers]
     observers = [to.second for to in times_observers]
     unique_times = unique(times)
-    return MultiTimeObserver(times_observers, times, observers, unique_times)
+    return unique_times, times, observers
+end
+
+function get_observation_times(times_observers::Vector{Pair{Float64,Any}})
+    times_observers = sort(times_observers; by=to -> to.first)
+    times = [to.first for to in times_observers]
+    observers = [to.second for to in times_observers]
+    unique_times = unique(times)
+    return unique_times, times, observers
+end
+
+function get_observation_times(options::MultiTimeObserverOptions)
+    return get_observation_times(collect(options.observers))
 end
 
 export get_multi_time_observer

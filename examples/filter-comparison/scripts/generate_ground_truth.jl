@@ -118,6 +118,20 @@ function ground_truth_stem(params)
     return string(hash(params.ground_truth); base=62)
 end
 
+
+function load_ground_truth(params::JutulJUDIFilterOptions; filestem=nothing, prefix=DrWatson.default_prefix(params.ground_truth), suffix="jld2", wload_kwargs=(;))
+    params_gt = params.ground_truth
+    if isnothing(filestem)
+        filestem = ground_truth_stem(params)
+    end
+
+    name = DrWatson.append_prefix_suffix(filestem, prefix, suffix)
+
+    savedir = datadir("ground_truth", "data")
+    file = joinpath(savedir, name)
+    data = wload(file; wload_kwargs...)
+end
+
 function produce_or_load_ground_truth(
     params::JutulJUDIFilterOptions; filestem=nothing, kwargs...
 )

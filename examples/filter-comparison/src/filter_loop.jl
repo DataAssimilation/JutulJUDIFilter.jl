@@ -110,7 +110,7 @@ function filter_loop(
             end
         end
     end
-    println("  ^ timing for running filter loop ($name_orig)")
+    println("  ^ timing for running estimator loop ($name_orig)")
 
     data = Dict(
         "states" => states,
