@@ -131,3 +131,37 @@ export JutulJUDIFilterOptions
     ensemble::EnsembleOptions
     estimator::EstimatorOptions
 end
+
+# Define copy constructors and hash function.
+for T in [
+    :NoisyObservationOptions,
+    :MultiTimeObserverOptions,
+    :SeismicObserverOptions,
+    :SourceReceiverGeometryOptions,
+    :SeismicCO2ObserverOptions,
+    :RockPhysicsModelOptions,
+    :BackgroundBlurOptions,
+    :WellObserverOptions,
+    :GaussianPriorOptions,
+    :EstimatorOptions,
+    :NoiseOptions,
+    :EnKFOptions,
+    :ModelOptions,
+    :EnsembleOptions,
+    :JutulJUDIFilterOptions,
+]
+    @eval function $T(x::$T; kwargs...)
+        default_kwargs = (f => getfield(x, f) for f in fieldnames($T))
+        return $T(; default_kwargs..., kwargs...)
+    end
+
+    @eval function Base.hash(x::$T, h::UInt)
+        hash_init = Base.hash(:JutulJUDIFilter_Comparison, Base.hash(Symbol($T), h))
+        h = foldl(
+            (r, f) -> Base.hash(getfield(x, f), r),
+            fieldnames($T);
+            init = hash_init
+        )
+        return h
+    end
+end
